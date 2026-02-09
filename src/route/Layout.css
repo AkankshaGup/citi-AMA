@@ -1,0 +1,15 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #1e1e1e;
+  color: white;
+}
+
+.right {
+  cursor: pointer;
+}
+
+.content {
+  padding: 24px;
+}
