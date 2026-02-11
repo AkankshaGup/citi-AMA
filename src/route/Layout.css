@@ -1,9 +1,6 @@
-.header {
-  display: flex;
-  justify-content: space-between;
-  padding: 16px 24px;
-  background: #1e1e1e;
-  color: white;
+*{
+    margin: 0;
+    padding: 0;
 }
 
 .right {

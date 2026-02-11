@@ -6,6 +6,7 @@ import ResourseTable from './ResourseTable';
 import { api } from "../api/axiosInstance";
 import { use, useEffect, useState } from 'react';
 import { auth } from "../auth/auth";
+import { Typography } from '@mui/material';
 
 const teamRes = [
     {
@@ -42,14 +43,22 @@ export default function ManagerDashboard() {
     }, []);
 
     return (<>
-        <Box display='flex' justifyContent='space-between'>
+        <Box display='flex' justifyContent='space-between' marginBottom={4}>
             <Autocomplete
                 disablePortal
                 getOptionLabel={(option) => option.sowName}
                 options={teamData || []}
+                renderOption={(params, option) => <Typography fontSize={14} {...params}>{option.sowName}</Typography>}
                 sx={{ width: 300 }}
-                renderInput={(params) => <TextField {...params} label="Select Team" size="small" />} />
-            <Button variant="contained">Export</Button>
+                renderInput={(params) => <TextField {...params} sx={{
+                    "& .MuiInputBase-input": {
+                        fontSize: "14px",   // input text
+                    },
+                    "& .MuiInputLabel-root": {
+                        fontSize: "14px",   // label
+                    },
+                }} label="Select Team" size="small" />} />
+            <Button variant="contained" sx={{ background: "linear-gradient(90deg, #0B4DBA 0%, #0A3FA3 100%)", }}>Export</Button>
         </Box>
         <ResourseTable />
     </>
