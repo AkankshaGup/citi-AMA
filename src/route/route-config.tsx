@@ -3,6 +3,8 @@ import AppLayout from "./Layout";
 import Login from "../component/Login.tsx";
 import ManagerDashboard from "../component/ManagerDashboard.tsx";
 import { auth } from "../auth/auth";
+import AddTimeSheet from "../component/AddTimeSheet.tsx";
+import LeaveForecast from "../component/LeaveForecast.tsx";
 
 const ProtectedRoute = ({ children }) => {
   return auth.isAuthenticated()
@@ -26,8 +28,18 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        index: true,
+        path: 'dashboard',
         element: <ManagerDashboard />,
+      },
+      
+      {
+        path: 'add-timesheet',
+        element: <AddTimeSheet />,
+      },
+      
+      {
+        path: 'leave-forecast',
+        element: <LeaveForecast />,
       },
     ],
   },
