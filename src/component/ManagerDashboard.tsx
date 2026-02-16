@@ -6,6 +6,7 @@ import ResourseTable from './ResourseTable';
 import { api } from "../api/axiosInstance";
 import { use, useEffect, useState } from 'react';
 import { auth } from "../auth/auth";
+import { Typography } from '@mui/material';
 
 const teamRes = [
     {
@@ -27,6 +28,7 @@ interface TeamResource {
 
 export default function ManagerDashboard() {
     const [teamData, setTeamData] = useState<TeamResource[] | null>(null);
+    const [sowId, setSowId] = useState<string>('');
     const user = auth.getUser();
     const fetchTeam = async () => {
         try {
@@ -34,7 +36,7 @@ export default function ManagerDashboard() {
             setTeamData(res.data);
 
         } catch (err) {
-            setTeamData(teamRes); // fallback to static data on error
+            setTeamData(teamRes); 
         }
     }
     useEffect(() => {
@@ -42,16 +44,25 @@ export default function ManagerDashboard() {
     }, []);
 
     return (<>
-        <Box display='flex' justifyContent='space-between'>
+        <Box display='flex' justifyContent='space-between' marginBottom={4}>
             <Autocomplete
                 disablePortal
+                onChange={(e:SyntheticEvent<Element, Event>,row:TeamResource)=>{setSowId(row?.sowId)}}
                 getOptionLabel={(option) => option.sowName}
                 options={teamData || []}
+                renderOption={(params, option) => <Typography fontSize={14} {...params}>{option.sowName}</Typography>}
                 sx={{ width: 300 }}
-                renderInput={(params) => <TextField {...params} label="Select Team" size="small" />} />
-            <Button variant="contained">Export</Button>
+                renderInput={(params) => <TextField {...params} sx={{
+                    "& .MuiInputBase-input": {
+                        fontSize: "14px", 
+                    },
+                    "& .MuiInputLabel-root": {
+                        fontSize: "14px",
+                    },
+                }} label="Select Team" size="small" />} />
+            <Button variant="contained" sx={{ background: "linear-gradient(90deg, #0B4DBA 0%, #0A3FA3 100%)", }}>Export</Button>
         </Box>
-        <ResourseTable />
+        <ResourseTable sowId={sowId}/>
     </>
     );
 }

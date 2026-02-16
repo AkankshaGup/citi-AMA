@@ -6,18 +6,24 @@ import { auth } from "../auth/auth";
 import AddTimeSheet from "../component/AddTimeSheet.tsx";
 import LeaveForecast from "../component/LeaveForecast.tsx";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return auth.isAuthenticated()
-    ? children
+    ? <>{children}</>
     : <Navigate to="/login" replace />;
 };
-
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return auth.isAuthenticated()
+    ? <Navigate to="/" replace />
+    : <>{children}</>;
+};
 export const router = createBrowserRouter([
-  {
+   {
     path: "/login",
-    element: auth.isAuthenticated()
-      ? <Navigate to="/" replace />
-      : <Login />,
+    element: (
+      <PublicRoute>
+        <Login />
+      </PublicRoute>
+    ),
   },
   {
     path: "/",
@@ -27,6 +33,10 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      {
+        index: true,
+        element: <ManagerDashboard />,
+      },
       {
         path: 'dashboard',
         element: <ManagerDashboard />,

@@ -15,6 +15,7 @@ const StatusChip: React.FC<StatusChipProps> = ({ value }) => {
         minWidth: 52,
         fontWeight: 600,
         borderRadius: "16px",
+        fontSize: "10px",
       }}
     />
   );
