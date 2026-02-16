@@ -26,9 +26,10 @@ const Login: React.FC = () => {
                 name: "Alice Admin",
                 email: "alice.admin@example.com",
                 role: "ROLE_ADMIN",
+                userId:'MGR-001-0000-0000-0000-000000000001',
                 message: "Login successful. Session ID: F3B72217FB9DD16DCF735FD5922B6405"
             })
-            navigate("/");
+            navigate("/dashboard");
 		}
 	};
 

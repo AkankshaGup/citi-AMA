@@ -8,18 +8,24 @@ import LeaveForecast from "../component/LeaveForecast.tsx";
 import LeaveForecastPage from "../component/LeaveForecastPage.tsx";
 import Dashboard from "../component/Dashboard.tsx";
 
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return auth.isAuthenticated()
-    ? children
+    ? <>{children}</>
     : <Navigate to="/login" replace />;
 };
-
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return auth.isAuthenticated()
+    ? <Navigate to="/" replace />
+    : <>{children}</>;
+};
 export const router = createBrowserRouter([
-  {
+   {
     path: "/login",
-    element: auth.isAuthenticated()
-      ? <Navigate to="/" replace />
-      : <Login />,
+    element: (
+      <PublicRoute>
+        <Login />
+      </PublicRoute>
+    ),
   },
   {
     path: "/",
@@ -44,6 +50,20 @@ export const router = createBrowserRouter([
       {
         path: "leave-forecast-page",
         element: <LeaveForecastPage />,
+      },
+      {
+        path: 'dashboard',
+        element: <ManagerDashboard />,
+      },
+      
+      {
+        path: 'add-timesheet',
+        element: <AddTimeSheet />,
+      },
+      
+      {
+        path: 'leave-forecast',
+        element: <LeaveForecast />,
       },
     ],
   },

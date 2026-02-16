@@ -1,31 +1,33 @@
-import { Outlet, useNavigate } from "react-router-dom";
-import { auth } from "../auth/auth";
+import { Outlet } from "react-router-dom";
+import { Box } from "@mui/material";
+import Header from "./Header";
+import Footer from "./Footer";
 import "./Layout.css";
 
 export default function AppLayout() {
-  const navigate = useNavigate();
-  const user = auth.getUser();
+    return (
+        <Box
+            sx={{
+                minHeight: "100vh",
+                display: "flex",
+                flexDirection: "column",
+            }}
+        >
 
-  const handleLogout = () => {
-    auth.logout();
-    navigate("/login");
-  };
-
-  return (
-    <>
-      <header className="header">
-        <div className="left">
-          Welcome, <strong>{user?.name}</strong>
-        </div>
-
-        <div className="right" onClick={handleLogout}>
-          🚪 Logout
-        </div>
-      </header>
-
-      <main className="content">
-        <Outlet />
-      </main>
-    </>
-  );
+            <Header />
+            <Box
+                component="main"
+                sx={{
+                    flex: 1,
+                    overflowY: "auto",
+                    px: 3,
+                    py: 2,
+                    backgroundColor: "#f5f7fb",
+                }}
+            >
+                <Outlet />
+            </Box>
+            <Footer />
+        </Box>
+    );
 }
