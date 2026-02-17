@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Container, Paper, Typography, TextField, Button, Box } from "@mui/material";
 import { api } from "../api/axiosInstance";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/auth";
 
 const Login: React.FC = () => {
-    const navigate = useNavigate();
+	const navigate = useNavigate();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState("");
@@ -16,20 +16,13 @@ const Login: React.FC = () => {
 			setError("Please enter email and password");
 			return;
 		}
-		setError("");   
+		setError("");
 		try {
 			const res = await api.post("/auth/login", { email, password });
-			console.log("Login success", res.data);
+			auth.setUser(res.data);
+			navigate("/dashboard");
 		} catch (err: any) {
-			// setError(err?.response?.data?.message || "Login failed");
-            auth.setUser({
-                name: "Alice Admin",
-                email: "alice.admin@example.com",
-                role: "ROLE_ADMIN",
-                userId:'MGR-001-0000-0000-0000-000000000001',
-                message: "Login successful. Session ID: F3B72217FB9DD16DCF735FD5922B6405"
-            })
-            navigate("/dashboard");
+			setError(err?.response?.data?.message || "Login failed");
 		}
 	};
 

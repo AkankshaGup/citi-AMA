@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const api = axios.create({
-  baseURL: 'http://localhost:8080/v1',
+  baseURL: 'http://localhost:8700',
   withCredentials: true, // 🔑 REQUIRED for cookies
   timeout: 10000,
 });
