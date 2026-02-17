@@ -81,7 +81,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
             setResourceData(res.data);
 
         } catch (err) {
-            setResourceData(tableData); 
+            console.log(err); 
         }
     }
     useEffect(() => {

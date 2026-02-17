@@ -1,25 +1,24 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import AppLayout from "./Layout";
-import Login from "../component/Login.tsx";
-import ManagerDashboard from "../component/ManagerDashboard.tsx";
+import Login from "../component/Login";
+import ManagerDashboard from "../component/ManagerDashboard";
+import AddTimeSheet from "../component/AddTimeSheet";
+import LeaveForecast from "../component/LeaveForecast";
+import LeaveForecastPage from "../component/LeaveForecastPage";
+import Dashboard from "../component/Dashboard";
 import { auth } from "../auth/auth";
-import AddTimeSheet from "../component/AddTimeSheet.tsx";
-import LeaveForecast from "../component/LeaveForecast.tsx";
-import LeaveForecastPage from "../component/LeaveForecastPage.tsx";
-import Dashboard from "../component/Dashboard.tsx";
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return auth.isAuthenticated()
-    ? <>{children}</>
-    : <Navigate to="/login" replace />;
-};
-const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  return auth.isAuthenticated()
-    ? <Navigate to="/" replace />
-    : <>{children}</>;
-};
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+  auth.isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />;
+
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =>
+  auth.isAuthenticated() ? <Navigate to="/" replace /> : <>{children}</>;
+
+const user = auth.getUser();
+const isAdmin = user?.role === "ROLE_ADMIN";
+
 export const router = createBrowserRouter([
-   {
+  {
     path: "/login",
     element: (
       <PublicRoute>
@@ -35,9 +34,21 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      // ✅ ROLE BASED DEFAULT ROUTE
+      isAdmin
+        ? {
+          index: true,
+          element: <Dashboard />,
+        }
+        : {
+          index: true,
+          element: <AddTimeSheet />,
+        },
+
+      // COMMON ROUTES
       {
-        index: true,
-        element: <Dashboard />,
+        path: "dashboard",
+        element: <ManagerDashboard />,
       },
       {
         path: "add-timesheet",
@@ -50,20 +61,6 @@ export const router = createBrowserRouter([
       {
         path: "leave-forecast-page",
         element: <LeaveForecastPage />,
-      },
-      {
-        path: 'dashboard',
-        element: <ManagerDashboard />,
-      },
-      
-      {
-        path: 'add-timesheet',
-        element: <AddTimeSheet />,
-      },
-      
-      {
-        path: 'leave-forecast',
-        element: <LeaveForecast />,
       },
     ],
   },

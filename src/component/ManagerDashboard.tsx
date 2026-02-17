@@ -35,9 +35,10 @@ export default function ManagerDashboard() {
         try {
             const res = await api.get("/sows/manager/" + user.userId);
             setTeamData(res.data);
+            setSowId(res.data[0]?.sowId || '');
 
         } catch (err) {
-            setTeamData(teamRes); 
+            console.log(err); 
         }
     }
     useEffect(() => {
@@ -63,7 +64,7 @@ export default function ManagerDashboard() {
                 }} label="Select Team" size="small" />} />
             <Button variant="contained" sx={{ background: "linear-gradient(90deg, #0B4DBA 0%, #0A3FA3 100%)", }}>Export</Button>
         </Box>
-        <ResourseTable sowId={sowId}/>
+        {sowId && <ResourseTable sowId={sowId}/>}
     </>
     );
 }
