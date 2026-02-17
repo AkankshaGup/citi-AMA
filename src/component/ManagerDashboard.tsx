@@ -4,7 +4,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import ResourseTable from './ResourseTable';
 import { api } from "../api/axiosInstance";
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { SyntheticEvent } from 'react';
 import { auth } from "../auth/auth";
 import { Typography } from '@mui/material';
 
@@ -47,7 +48,7 @@ export default function ManagerDashboard() {
         <Box display='flex' justifyContent='space-between' marginBottom={4}>
             <Autocomplete
                 disablePortal
-                onChange={(e:SyntheticEvent<Element, Event>,row:TeamResource)=>{setSowId(row?.sowId)}}
+                onChange={(e: SyntheticEvent<Element, Event>, value: TeamResource | null) => { setSowId(value?.sowId ?? ''); }}
                 getOptionLabel={(option) => option.sowName}
                 options={teamData || []}
                 renderOption={(params, option) => <Typography fontSize={14} {...params}>{option.sowName}</Typography>}
