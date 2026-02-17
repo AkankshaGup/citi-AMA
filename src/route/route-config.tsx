@@ -5,6 +5,8 @@ import ManagerDashboard from "../component/ManagerDashboard.tsx";
 import { auth } from "../auth/auth";
 import AddTimeSheet from "../component/AddTimeSheet.tsx";
 import LeaveForecast from "../component/LeaveForecast.tsx";
+import LeaveForecastPage from "../component/LeaveForecastPage.tsx";
+import Dashboard from "../component/Dashboard.tsx";
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return auth.isAuthenticated()
@@ -35,7 +37,19 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <ManagerDashboard />,
+        element: <Dashboard />,
+      },
+      {
+        path: "add-timesheet",
+        element: <AddTimeSheet />,
+      },
+      {
+        path: "leave-forecast",
+        element: <LeaveForecast />,
+      },
+      {
+        path: "leave-forecast-page",
+        element: <LeaveForecastPage />,
       },
       {
         path: 'dashboard',

@@ -7,6 +7,8 @@ import {
     Button,
     Divider,
     Stack,
+    FormControlLabel,
+    Checkbox,
 } from "@mui/material";
 
 import {
@@ -21,6 +23,7 @@ import {
     isAfter,
     isBefore,
 } from "date-fns";
+import ComplianceModal, { type ComplianceAnswers } from "./modal/ComplianceModal";
 
 type WeekRow = {
     key: string; // yyyy-MM-dd of weekStart (stable)
@@ -136,6 +139,21 @@ export default function AddTimeSheet() {
         // await api.post("/weekly-inputs", payload)
     };
 
+    const [open, setOpen] = React.useState(false);
+
+    const [compliance, setCompliance] =
+        React.useState<ComplianceAnswers | null>(null);
+
+    const [isComplianceChecked, setIsComplianceChecked] = React.useState(false);
+
+    const handleApply = (v: ComplianceAnswers) => {
+        setCompliance(v);
+        setIsComplianceChecked(compliance?.ptsSavedTillMonth !== null &&
+        compliance?.cofyUpdated !== null &&
+        compliance?.citiTrainingCompleted !== null)
+        setOpen(false);
+    };
+
     return (
         <Paper elevation={3} sx={{ maxWidth: 900, mx: "auto", mt: 4, p: 3 }}>
             {/* Header */}
@@ -191,6 +209,24 @@ export default function AddTimeSheet() {
                     </Box>
                 ))}
             </Stack>
+            <>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={isComplianceChecked}
+                            onClick={() => setOpen(true)}
+                        />
+                    }
+                    label="Compliance checklist (click to review)"
+                />
+
+                <ComplianceModal
+                    open={open}
+                    initialValues={compliance ?? undefined}
+                    onClose={() => setOpen(false)}
+                    onApply={handleApply}
+                />
+            </>
 
             {/* Actions */}
             <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
