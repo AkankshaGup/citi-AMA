@@ -37,7 +37,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
     const totalWeeks = getWeeksInCurrentMonth();
     const fetchTeamResources = async () => {
         try {
-            const res = await api.get(`/admin/reports/monthly?sowId=${sowId}&month=${year}-${month}&page=${page}&size=${rowsPerPage}`);
+            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&month=${year}-${month}&page=${page}&size=${rowsPerPage}`);
             // Expecting paginated response with `content` and pagination metadata
             const data = res.data;
             if (data && Array.isArray(data.content)) {
