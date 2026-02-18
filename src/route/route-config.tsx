@@ -13,9 +13,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   auth.isAuthenticated() ? <Navigate to="/" replace /> : <>{children}</>;
 
-// const user = auth.getUser();
-// const isAdmin = user?.role === "ROLE_ADMIN";
-// console.log("User Role in Route Config:", user?.role);
 export const router = createBrowserRouter([
   {
     path: "/login",
