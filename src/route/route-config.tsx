@@ -40,14 +40,14 @@ export const router = createBrowserRouter([
         path: "dashboard",
         element: <ManagerDashboard />,
       },
-      {
-        path: "add-timesheet",
-        element: <AddTimeSheet />,
-      },
-      {
-        path: "leave-forecast-page",
-        element: <LeaveForecastPage />,
-      },
+      // {
+      //   path: "add-timesheet",
+      //   element: <AddTimeSheet />,
+      // },
+      // {
+      //   path: "leave-forecast-page",
+      //   element: <LeaveForecastPage />,
+      // },
     ],
   },
 ]);
