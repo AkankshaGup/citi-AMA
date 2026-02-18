@@ -72,13 +72,14 @@ export function getCurrentDateInfo() {
   const now = new Date();
 
   const year = now.getFullYear();
-  const month = now.getMonth() + 1; // 1–12
-  const day = now.getDate();        // 1–31
+  const month = String(now.getMonth() + 1).padStart(2, "0"); 
+  const day = now.getDate();
 
   return {
     year,
-    month,
+    month, 
     day,
   };
 }
+
 

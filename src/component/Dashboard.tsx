@@ -2,6 +2,7 @@
 import { auth } from "../auth/auth";
 import LeaveForecastPage from "./LeaveForecastPage";
 import ManagerDashboard from "./ManagerDashboard";
+import UserDashboard from "./UserDashboard";
 
 export default function Dashboard() {
     
@@ -11,7 +12,7 @@ const isAdmin = user?.role === "ROLE_ADMIN";
     {isAdmin ? (
       <ManagerDashboard />
     ) : (
-      <LeaveForecastPage />
+      <UserDashboard />
     )}
     </>
   );
