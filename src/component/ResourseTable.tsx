@@ -19,69 +19,44 @@ import {
 } from "@mui/material";
 import { api } from "../api/axiosInstance";
 import StatusChip from "../generic/StatusChip";
-import { getWeeksInCurrentMonth } from "../utils/dateUtils";
-
-const tableData = [
-    {
-        "employeeId": "e1",
-        "name": "Alice Admin",
-        "email": "alice.admin@example.com",
-        "role": "ADMIN",
-        "soeId": "123",
-        "location": "Pune",
-        "assignmentStartDate": "2025-02-01",
-        "timesheets": "[{\"workDate\": \"2026-02-08\", \"hoursLogged\": 8.00}, {\"workDate\": \"2026-02-09\", \"hoursLogged\": 8.00}, {\"workDate\": \"2026-02-10\", \"hoursLogged\": 8.00}, {\"workDate\": \"2026-02-11\", \"hoursLogged\": 4.00}]",
-        "leaves": "[{\"comments\": \"Sick leave\", \"startDate\": \"2026-02-09\", \"leaveTypeId\": 1}]",
-        "holidays": "[{\"date\": \"2026-02-22\", \"name\": \"Holi\", \"type\": \"1\"}]",
-        "totalHours": 28,
-        "numberOfLeaves": 1,
-        "numberOfHalfDays": 1,
-        "numberOfHolidays": 1,
-        "weeklyHours": "[{\"hours\": 40.00, \"weekStart\": \"2026-02-01\"}]",
-        "ptsSaved": true,
-        "cofyUpdate": false,
-        "citiTraining": true
-    },
-    {
-        "employeeId": "e2",
-        "name": "normalemp1",
-        "email": "emp1.admin@example.com",
-        "role": "USER",
-        "soeId": "12",
-        "location": "Pune",
-        "assignmentStartDate": "2025-02-01",
-        "timesheets": "[{\"workDate\": \"2026-02-08\", \"hoursLogged\": 10.00}]",
-        "leaves": "[{\"comments\": \"Sick leave\", \"startDate\": \"2026-02-10\", \"leaveTypeId\": 1}, {\"comments\": \"Sick leave\", \"startDate\": \"2026-02-11\", \"leaveTypeId\": 1}]",
-        "holidays": "[{\"date\": \"2026-02-22\", \"name\": \"Holi\", \"type\": \"1\"}]",
-        "totalHours": 10,
-        "numberOfLeaves": 2,
-        "numberOfHalfDays": 0,
-        "numberOfHolidays": 1,
-        "weeklyHours": "[]",
-        "ptsSaved": false,
-        "cofyUpdate": true,
-        citiTraining: true
-    }
-];
-
+import { getWeeksInCurrentMonth,getCurrentDateInfo } from "../utils/dateUtils";
+import {resourceTimesheetData} from "../metadata/metadata";
 interface IResourseTable {
     sowId: string
 }
 
 const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
-    const [resourceData, setResourceData] = useState(tableData);
+    console.log(resourceTimesheetData)
+    const {year, month} = getCurrentDateInfo();
+    const [resourceData, setResourceData] = useState<any[]>([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [totalCount, setTotalCount] = useState(0);
     const [openModal, setOpenModal] = useState(false);
     const [selectedRow, setSelectedRow] = useState<any>(null);
     const totalWeeks = getWeeksInCurrentMonth();
     const fetchTeamResources = async () => {
         try {
-            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&month=2026-02&page=${page}&size=${rowsPerPage}`);
-            setResourceData(res.data);
+            const res = await api.get(`/admin/reports/monthly?sowId=${sowId}&month=${year}-${month}&page=${page}&size=${rowsPerPage}`);
+            // Expecting paginated response with `content` and pagination metadata
+            const data = res.data;
+            if (data && Array.isArray(data.content)) {
+                setResourceData(data.content);
+                setTotalCount(typeof data.totalElements === 'number' ? data.totalElements : data.content.length);
+            } else if (Array.isArray(data)) {
+                // fallback in case API returns plain array
+                setResourceData(data);
+                setTotalCount(data.length);
+            } else {
+                setResourceData([]);
+                setTotalCount(0);
+            }
 
         } catch (err) {
-            console.log(err); 
+            // fallback metadata object
+            const fallback = (resourceTimesheetData as any);
+            setResourceData(Array.isArray(fallback.content) ? fallback.content : []);
+            setTotalCount(typeof fallback.totalElements === 'number' ? fallback.totalElements : (Array.isArray(fallback.content) ? fallback.content.length : 0));
         }
     }
     useEffect(() => {
@@ -107,10 +82,8 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
         setSelectedRow(null);
     };
 
-    const paginatedData = resourceData.slice(
-        page * rowsPerPage,
-        page * rowsPerPage + rowsPerPage
-    );
+    // Server provides paginated `content`, so render `resourceData` directly.
+    const paginatedData = resourceData;
     const columns: { key: string; label: string; width?: number; render?: (v: any, i?: number, row?: any) => React.ReactNode }[] = [
         { key: "sno", label: "S.No", width: 3, render: (_v, i) => (i ?? 0) + 1 },
         { key: "location", label: "Location", width: 6 },
@@ -181,7 +154,11 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
                             sx={{ cursor: "pointer", "&:hover": { backgroundColor: "#f5f5f5" } }}
                         >
                             {columns.map((col) => {
-                                const value = (row as any)[col.key];
+                                let value = (row as any)[col.key];
+                                // special handling for serial number column
+                                if (col.key === 'sno') {
+                                    value = (page * rowsPerPage) + rowIndex + 1;
+                                }
 
                                 return (
                                     <TableCell key={col.key} align="center" sx={{
@@ -194,7 +171,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
                                     }}>
                                         {col.render
                                             ? col.render(value, rowIndex, row)
-                                            : value ?? "-"}
+                                            : (value ?? "-")}
                                     </TableCell>
                                 );
                             })}
@@ -205,7 +182,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
             <TablePagination
                 rowsPerPageOptions={[5, 10, 25, 50]}
                 component="div"
-                count={resourceData.length}
+                count={totalCount}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}

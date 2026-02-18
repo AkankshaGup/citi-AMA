@@ -67,3 +67,18 @@ export function getWeeksInCurrentMonth(): number {
 
   return Math.ceil((daysInMonth + startDay - endDay) / 7);
 }
+
+export function getCurrentDateInfo() {
+  const now = new Date();
+
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1–12
+  const day = now.getDate();        // 1–31
+
+  return {
+    year,
+    month,
+    day,
+  };
+}
+

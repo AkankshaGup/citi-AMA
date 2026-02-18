@@ -1,11 +1,14 @@
 
+import { auth } from "../auth/auth";
 import LeaveForecastPage from "./LeaveForecastPage";
 import ManagerDashboard from "./ManagerDashboard";
 
 export default function Dashboard() {
-    const isManager = false; // Replace with actual logic to determine if the user is a manager
+    
+const user = auth.getUser();
+const isAdmin = user?.role === "ROLE_ADMIN";
   return (<>
-    {isManager ? (
+    {isAdmin ? (
       <ManagerDashboard />
     ) : (
       <LeaveForecastPage />

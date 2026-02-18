@@ -3,7 +3,6 @@ import AppLayout from "./Layout";
 import Login from "../component/Login";
 import ManagerDashboard from "../component/ManagerDashboard";
 import AddTimeSheet from "../component/AddTimeSheet";
-import LeaveForecast from "../component/LeaveForecast";
 import LeaveForecastPage from "../component/LeaveForecastPage";
 import Dashboard from "../component/Dashboard";
 import { auth } from "../auth/auth";
@@ -13,9 +12,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   auth.isAuthenticated() ? <Navigate to="/" replace /> : <>{children}</>;
-
-const user = auth.getUser();
-const isAdmin = user?.role === "ROLE_ADMIN";
 
 export const router = createBrowserRouter([
   {
@@ -34,15 +30,9 @@ export const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
-      // ✅ ROLE BASED DEFAULT ROUTE
-      isAdmin
-        ? {
+     {
           index: true,
           element: <Dashboard />,
-        }
-        : {
-          index: true,
-          element: <AddTimeSheet />,
         },
 
       // COMMON ROUTES
@@ -53,10 +43,6 @@ export const router = createBrowserRouter([
       {
         path: "add-timesheet",
         element: <AddTimeSheet />,
-      },
-      {
-        path: "leave-forecast",
-        element: <LeaveForecast />,
       },
       {
         path: "leave-forecast-page",
