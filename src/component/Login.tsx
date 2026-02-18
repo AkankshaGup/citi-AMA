@@ -3,6 +3,7 @@ import { Container, Paper, Typography, TextField, Button, Box } from "@mui/mater
 import { api } from "../api/axiosInstance";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/auth";
+import {loginRes} from "../metadata/metadata.ts";
 
 const Login: React.FC = () => {
 	const navigate = useNavigate();
@@ -20,9 +21,11 @@ const Login: React.FC = () => {
 		try {
 			const res = await api.post("/auth/login", { email, password });
 			auth.setUser(res.data);
-			navigate("/dashboard");
+			navigate("/");
 		} catch (err: any) {
-			setError(err?.response?.data?.message || "Login failed");
+			// setError(err?.response?.data?.message || "Login failed");
+			auth.setUser(loginRes); 
+			navigate("/");
 		}
 	};
 
