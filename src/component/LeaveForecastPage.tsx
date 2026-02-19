@@ -43,20 +43,19 @@ function getAxiosErrMsg(err: unknown, fallback: string) {
 }
 
 type ApiTimesheet = { workDate: string; hoursLogged: number };
-type ApiLeave = { comments?: string; startDate: string; leaveTypeId: number };
+type ApiLeave = { startDate: string };
 type ApiHoliday = { date: string; name: string; type?: string };
 
 type GetApiItem = {
   employeeId: string;
   sowId: string;
-  timesheets: string;
-  leaves: string;
-  holidays: string;
+  timesheets: string; // JSON string
+  leaves: string; // JSON string
+  holidays: string; // JSON string
 };
 
-type GetApiResponse = {
-  content: GetApiItem[];
-};
+// API may return either {content:[...]} OR a direct object
+type GetApiResponse = { content: GetApiItem[] } | GetApiItem;
 
 type SubmitPayload = {
   employeeId: string;
@@ -64,15 +63,13 @@ type SubmitPayload = {
   timesheet: { date: string; hours: number }[];
 };
 
-//POST (axios)
+// POST using axios
 async function postTimesheetSave(payload: SubmitPayload) {
-  // If your backend expects without leading slash, keep as below.
-  // If it expects absolute, adjust baseURL or endpoint accordingly.
   const res = await api.post("/public/timesheets/save", payload);
   return res.data;
 }
 
-//GET (axios)
+// GET using axios
 async function fetchLeaveForecastApi(userId: string, monthKey: string): Promise<GetApiResponse> {
   const res = await api.get<GetApiResponse>("/public/userDashBoard", {
     params: { userId, month: monthKey },
@@ -83,9 +80,7 @@ async function fetchLeaveForecastApi(userId: string, monthKey: string): Promise<
 export default function LeaveForecastPage() {
   const user = auth.getUser();
   const employeeId = user.userId; // submit payload
-
-  // userId param for GET
-  const userId = user.userId; // or user.userId if same as backend expects
+  const userId = user.userId; // GET param (change to "e1" if backend expects different)
 
   const currentMonthStart = React.useMemo(() => startOfMonth(new Date()), []);
   const [month, setMonth] = React.useState<Date>(currentMonthStart);
@@ -119,13 +114,19 @@ export default function LeaveForecastPage() {
         // const resp = await fetchLeaveForecastMock(employeeId, key);
         const resp = await fetchLeaveForecastApi(userId, key);
 
-        const item = resp.content?.[0];
+        // support both response shapes
+        const item: GetApiItem | undefined =
+          resp && typeof resp === "object" && "content" in resp
+            ? (resp as { content: GetApiItem[] }).content?.[0]
+            : (resp as GetApiItem);
+
         if (!item) return;
 
         const apiTimesheets = safeJsonParse<ApiTimesheet[]>(item.timesheets, []);
         const apiLeaves = safeJsonParse<ApiLeave[]>(item.leaves, []);
         const apiHolidays = safeJsonParse<ApiHoliday[]>(item.holidays, []);
 
+        // 1) holiday map (yyyy-MM-dd -> name)
         const hm: Record<string, string> = {};
         for (const h of apiHolidays) {
           if (!h?.date) continue;
@@ -133,8 +134,10 @@ export default function LeaveForecastPage() {
         }
         setHolidayMap(hm);
 
+        // 2) values (hours + leaves)
         const nextValues: Record<string, DayCode> = {};
 
+        // Do NOT apply hours to holiday/weekend (per your requirement)
         for (const t of apiTimesheets) {
           if (!t?.workDate) continue;
           const d = new Date(t.workDate);
@@ -239,14 +242,10 @@ export default function LeaveForecastPage() {
         <CircularProgress />
       </Backdrop>
 
-      <TimesheetHeader
-        monthTitle={monthTitle}
-        onPrev={handlePrev}
-        onNext={handleNext}
-        navDisabled={loading || submitLoading}
-      />
+      <TimesheetHeader monthTitle={monthTitle} onPrev={handlePrev} onNext={handleNext} navDisabled={loading || submitLoading} />
 
       <Divider sx={{ my: 2 }} />
+
       <TimesheetGridHeader />
 
       <Stack spacing={1.25}>
