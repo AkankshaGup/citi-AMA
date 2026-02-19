@@ -22,31 +22,11 @@ export function WeekRow(props: {
       key={dayKey(week.weekStart)}
       sx={{
         display: "grid",
-        gridTemplateColumns: "220px repeat(7, 1fr) 84px",
+        gridTemplateColumns: "repeat(7, 1fr)",
         gap: 1,
         alignItems: "stretch",
       }}
     >
-      {/* LEFT: week range */}
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 1,
-          px: 1,
-          py: 1,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-        }}
-      >
-        <Typography fontWeight={800} sx={{ lineHeight: 1.2 }}>
-          {format(week.weekStart, "dd/MM/yyyy")}
-        </Typography>
-        <Typography variant="caption" sx={{ opacity: 0.75 }}>
-          to {format(week.weekEnd, "dd/MM/yyyy")}
-        </Typography>
-      </Box>
 
       {/* Day cells */}
       {week.days.map((d) => {
@@ -106,23 +86,6 @@ export function WeekRow(props: {
           />
         );
       })}
-
-      {/* Total */}
-      <Box
-        sx={{
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontWeight: 900,
-          fontSize: 16,
-          minHeight: 64,
-        }}
-      >
-        {weekTotal}
-      </Box>
     </Box>
   );
 }
