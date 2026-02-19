@@ -3,7 +3,7 @@ import { Alert, Backdrop, CircularProgress, Divider, Paper, Snackbar, Stack } fr
 import { addMonths, subMonths, format, isBefore, isSameMonth, startOfMonth } from "date-fns";
 
 import type { DayCode } from "../types/timesheetTypes";
-//import { fetchLeaveForecastMock } from "../mock/mockData"; // keep import for now (comment usage below)
+// import { fetchLeaveForecastMock } from "../mock/mockData";
 
 import { dayKey, getRequiredDatesForMonth, getWeeksForMonth } from "../utils/dateUtils";
 import { isWeekend, weekTotal as calcWeekTotal } from "../utils/timesheetUtils";
@@ -14,6 +14,8 @@ import { TimesheetGridHeader } from "./timesheet/TimesheetGridHeader";
 import { WeekRow } from "./timesheet/WeekRow";
 import { ActionsBar } from "./timesheet/ActionsBar";
 import { auth } from "../auth/auth";
+import { api } from "../api/axiosInstance";
+import axios from "axios";
 
 /** safe JSON parse for API fields that are JSON strings */
 function safeJsonParse<T>(s: string, fallback: T): T {
@@ -32,6 +34,14 @@ function hoursToCode(h: number): DayCode {
   return "";
 }
 
+function getAxiosErrMsg(err: unknown, fallback: string) {
+  if (!axios.isAxiosError(err)) return fallback;
+  const data: any = err.response?.data;
+  if (typeof data === "string" && data.trim()) return data;
+  if (data?.message) return String(data.message);
+  return err.message || fallback;
+}
+
 type ApiTimesheet = { workDate: string; hoursLogged: number };
 type ApiLeave = { comments?: string; startDate: string; leaveTypeId: number };
 type ApiHoliday = { date: string; name: string; type?: string };
@@ -39,9 +49,9 @@ type ApiHoliday = { date: string; name: string; type?: string };
 type GetApiItem = {
   employeeId: string;
   sowId: string;
-  timesheets: string; // JSON string
-  leaves: string; // JSON string
-  holidays: string; // JSON string
+  timesheets: string;
+  leaves: string;
+  holidays: string;
 };
 
 type GetApiResponse = {
@@ -54,41 +64,28 @@ type SubmitPayload = {
   timesheet: { date: string; hours: number }[];
 };
 
+//POST (axios)
 async function postTimesheetSave(payload: SubmitPayload) {
-  const res = await fetch("public/timesheets/save", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed (${res.status})`);
-  }
-
-  try {
-    return await res.json();
-  } catch {
-    return null;
-  }
+  // If your backend expects without leading slash, keep as below.
+  // If it expects absolute, adjust baseURL or endpoint accordingly.
+  const res = await api.post("/public/timesheets/save", payload);
+  return res.data;
 }
 
-async function fetchLeaveForecastApi(employeeId: string, monthKey: string): Promise<GetApiResponse> {
-  const url = `user/userDashBoard?userId=${encodeURIComponent(employeeId)}&month=${encodeURIComponent(monthKey)}`;
-  const res = await fetch(url, { method: "GET" });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `GET failed (${res.status})`);
-  }
-
-  return (await res.json()) as GetApiResponse;
+//GET (axios)
+async function fetchLeaveForecastApi(userId: string, monthKey: string): Promise<GetApiResponse> {
+  const res = await api.get<GetApiResponse>("/public/userDashBoard", {
+    params: { userId, month: monthKey },
+  });
+  return res.data;
 }
 
 export default function LeaveForecastPage() {
-  //const employeeId = "AIPL12345"; // used in submit payload
   const user = auth.getUser();
-  const employeeId = user.userId; // used in submit payload
+  const employeeId = user.userId; // submit payload
+
+  // userId param for GET
+  const userId = user.userId; // or user.userId if same as backend expects
 
   const currentMonthStart = React.useMemo(() => startOfMonth(new Date()), []);
   const [month, setMonth] = React.useState<Date>(currentMonthStart);
@@ -106,9 +103,7 @@ export default function LeaveForecastPage() {
   const monthKey = format(month, "yyyy-MM");
 
   const isHoliday = React.useCallback((d: Date) => !!holidayMap[dayKey(d)], [holidayMap]);
-
   const isDisabledDay = React.useCallback((d: Date) => isHoliday(d) || isWeekend(d), [isHoliday]);
-
   const holidayName = React.useCallback((d: Date) => holidayMap[dayKey(d)], [holidayMap]);
 
   const loadMonth = React.useCallback(
@@ -117,13 +112,12 @@ export default function LeaveForecastPage() {
       setLoading(true);
       setErrorMsg(null);
 
-      // clear previous month state
       setValues({});
       setHolidayMap({});
 
       try {
-        // const resp = await fetchLeaveForecastMock(employeeId, key); 
-        const resp = await fetchLeaveForecastApi(employeeId, key);
+        // const resp = await fetchLeaveForecastMock(employeeId, key);
+        const resp = await fetchLeaveForecastApi(userId, key);
 
         const item = resp.content?.[0];
         if (!item) return;
@@ -132,15 +126,13 @@ export default function LeaveForecastPage() {
         const apiLeaves = safeJsonParse<ApiLeave[]>(item.leaves, []);
         const apiHolidays = safeJsonParse<ApiHoliday[]>(item.holidays, []);
 
-        // 1) holiday map (yyyy-MM-dd -> name)
         const hm: Record<string, string> = {};
         for (const h of apiHolidays) {
-          if (!h?.date) continue; // API date is yyyy-MM-dd
+          if (!h?.date) continue;
           hm[h.date] = h.name || "Holiday";
         }
         setHolidayMap(hm);
 
-        // 2) values (hours + leaves)
         const nextValues: Record<string, DayCode> = {};
 
         for (const t of apiTimesheets) {
@@ -167,12 +159,12 @@ export default function LeaveForecastPage() {
 
         setValues(nextValues);
       } catch (e) {
-        setErrorMsg(e instanceof Error ? e.message : "Failed to load month data");
+        setErrorMsg(getAxiosErrMsg(e, "Failed to load month data"));
       } finally {
         setLoading(false);
       }
     },
-    [employeeId]
+    [userId]
   );
 
   React.useEffect(() => {
@@ -218,15 +210,16 @@ export default function LeaveForecastPage() {
       .filter(([, v]) => v === "8" || v === "4" || v === "12")
       .map(([date, v]) => ({ date, hours: Number(v) }));
 
-    const payload = { employeeId, leaveForecast, timesheet };
+    const payload: SubmitPayload = { employeeId, leaveForecast, timesheet };
 
     try {
       setSubmitLoading(true);
       setErrorMsg(null);
+      console.log("Submitting payload:", payload);
       await postTimesheetSave(payload);
       setSuccessOpen(true);
     } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Failed to submit timesheet");
+      setErrorMsg(getAxiosErrMsg(e, "Failed to submit timesheet"));
     } finally {
       setSubmitLoading(false);
     }
@@ -254,7 +247,6 @@ export default function LeaveForecastPage() {
       />
 
       <Divider sx={{ my: 2 }} />
-
       <TimesheetGridHeader />
 
       <Stack spacing={1.25}>
@@ -277,7 +269,6 @@ export default function LeaveForecastPage() {
       <TimesheetLegend />
       <ActionsBar onSubmit={handleSubmit} saveDisabled={saveDisabled} />
 
-      {/* Success banner */}
       <Snackbar
         open={successOpen}
         autoHideDuration={3000}
@@ -289,7 +280,6 @@ export default function LeaveForecastPage() {
         </Alert>
       </Snackbar>
 
-      {/* Error banner */}
       <Snackbar
         open={!!errorMsg}
         autoHideDuration={5000}
