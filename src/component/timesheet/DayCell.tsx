@@ -8,7 +8,7 @@ export function DayCell(props: {
   date: Date;
   month: Date;
   value: DayCode;
-  disabled: boolean;
+  disabled: boolean; // now visual only
   isLeave: boolean;
   onChange: (date: Date, val: DayCode) => void;
 }) {
@@ -25,7 +25,11 @@ export function DayCell(props: {
         borderRadius: 1,
         p: 0.75,
         minHeight: 64,
-        bgcolor: disabled ? "action.disabledBackground" : isLeave ? "warning.light" : "background.paper",
+        bgcolor: disabled
+          ? "action.disabledBackground"
+          : isLeave
+            ? "warning.light"
+            : "background.paper",
         display: "flex",
         flexDirection: "column",
         gap: 0.5,
@@ -35,13 +39,28 @@ export function DayCell(props: {
         {format(date, "dd MMM")}
       </Typography>
 
-      <FormControl fullWidth size="small">
+      <FormControl fullWidth size="small" variant="outlined">
         <Select
           value={value}
           displayEmpty
-          disabled={disabled}
           onChange={(e) => onChange(date, e.target.value as DayCode)}
-          sx={{ "& .MuiSelect-select": { py: 0.75 } }}
+          sx={{
+            "& .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+              border: "none",
+            },
+            "& .MuiSelect-select": {
+              py: 0.75,
+            },
+            ...(disabled && {
+              bgcolor: "grey.200",
+            }),
+          }}
         >
           <MenuItem value="">
             <em>Select</em>
@@ -53,6 +72,7 @@ export function DayCell(props: {
           ))}
         </Select>
       </FormControl>
+
     </Box>
   );
 }

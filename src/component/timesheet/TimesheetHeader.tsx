@@ -7,15 +7,15 @@ type Props = {
   monthTitle: string;
   onPrev: () => void;
   onNext: () => void;
-  navDisabled?: boolean; // ✅ NEW
+  navDisabled?: boolean;
 };
 
 export function TimesheetHeader({
-  title = "Timesheet",
+  title = "Leave Forecast",
   monthTitle,
   onPrev,
   onNext,
-  navDisabled = false, // ✅ default
+  navDisabled = false,
 }: Props) {
   return (
     <Box
@@ -35,7 +35,7 @@ export function TimesheetHeader({
         <IconButton
           onClick={onPrev}
           aria-label="previous month"
-          disabled={navDisabled} // ✅ HERE
+          disabled={navDisabled}
         >
           <ChevronLeftIcon />
         </IconButton>
@@ -51,7 +51,7 @@ export function TimesheetHeader({
         <IconButton
           onClick={onNext}
           aria-label="next month"
-          disabled={navDisabled} // ✅ HERE
+          disabled={navDisabled}
         >
           <ChevronRightIcon />
         </IconButton>
