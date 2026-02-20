@@ -28,8 +28,9 @@ export function getWeeksForMonth(monthDate: Date): WeekRow[] {
 
     const intersects = !(isBefore(we, ms) || isAfter(ws, me));
     if (intersects) {
-      const days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
-      weeks.push({ weekStart: ws, weekEnd: we, days });
+        const days = Array.from({ length: 7 }, (_, i) => addDays(ws, i));
+        const key = format(ws, "yyyy-MM-dd");
+        weeks.push({ key, weekStart: ws, weekEnd: we, days });
     }
     cursor = addWeeks(cursor, 1);
   }
@@ -72,15 +73,50 @@ export function getCurrentDateInfo() {
   const now = new Date();
 
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0"); 
+  const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = now.getDate();
 
   return {
     year,
-    month, 
+    month,
     day,
   };
 
+}
+
+export function getWeeksLabelForMonth(monthDate: Date): WeekRow[] {
+  const monthStart = startOfMonth(monthDate);
+  const monthEnd = endOfMonth(monthDate);
+
+  let cursor = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
+  const last = endOfWeek(monthEnd, { weekStartsOn: 1 });
+
+  const weeks: WeekRow[] = [];
+  let idx = 1;
+
+  while (!isAfter(cursor, last)) {
+    const ws = cursor;
+    const we = endOfWeek(ws, { weekStartsOn: 1 });
+
+    // keep only weeks that intersect the month
+    const intersects = !(isBefore(we, monthStart) || isAfter(ws, monthEnd));
+
+    if (intersects) {
+      const key = format(ws, "yyyy-MM-dd");
+      weeks.push({
+        key,
+        weekStart: ws,
+        weekEnd: we,
+        // label: `Week ${idx}: ${format(ws, "dd MMM")} - ${format(we, "dd MMM")}`,
+        label: `Week ${idx}: `,
+      });
+      idx += 1;
+    }
+
+    cursor = addWeeks(cursor, 1);
+  }
+
+  return weeks;
 }
 
 

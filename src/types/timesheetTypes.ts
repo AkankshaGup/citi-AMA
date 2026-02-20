@@ -1,5 +1,5 @@
 export type DayCode = "8" | "4" | "12" | "L" | "";
-export type WeekRow = { weekStart: Date; weekEnd: Date; days: Date[] };
+export type WeekRow = { weekStart: Date; weekEnd: Date; days?: Date[]; key: string; label?: string };
 
 export type MockApiResponse = {
   timesheet: Record<string, number>;
