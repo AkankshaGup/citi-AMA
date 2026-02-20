@@ -8,72 +8,66 @@ import {
     Divider,
     Stack,
     FormControlLabel,
-    Checkbox,
+    IconButton,
+    FormControl,
+    FormLabel,
+    RadioGroup,
+    Radio,
 } from "@mui/material";
-
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
     addMonths,
     subMonths,
-    startOfMonth,
-    endOfMonth,
-    startOfWeek,
-    endOfWeek,
-    addWeeks,
     format,
-    isAfter,
-    isBefore,
 } from "date-fns";
-import ComplianceModal, { type ComplianceAnswers } from "./modal/ComplianceModal";
+import { getWeeksLabelForMonth } from "../utils/dateUtils";
+import type { WeekRow } from "../types/timesheetTypes";
+import { type ComplianceAnswers } from "./modal/ComplianceModal";
 
-type WeekRow = {
-    key: string; // yyyy-MM-dd of weekStart (stable)
+function YesNoQuestion({
+    label,
+    value,
+    onChange,
+}: {
     label: string;
-    weekStart: Date;
-    weekEnd: Date;
-};
+    value: boolean | null;
+    onChange: (v: boolean) => void;
+}) {
+    return (
+        <FormControl>
+            <FormLabel sx={{ mb: 1 }}>
+                <Typography fontWeight={600}>{label}</Typography>
+            </FormLabel>
 
-function getWeeksForMonth(monthDate: Date): WeekRow[] {
-    const monthStart = startOfMonth(monthDate);
-    const monthEnd = endOfMonth(monthDate);
-
-    let cursor = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
-    const last = endOfWeek(monthEnd, { weekStartsOn: 1 });
-
-    const weeks: WeekRow[] = [];
-    let idx = 1;
-
-    while (!isAfter(cursor, last)) {
-        const ws = cursor;
-        const we = endOfWeek(ws, { weekStartsOn: 1 });
-
-        // keep only weeks that intersect the month
-        const intersects = !(isBefore(we, monthStart) || isAfter(ws, monthEnd));
-
-        if (intersects) {
-            const key = format(ws, "yyyy-MM-dd");
-            weeks.push({
-                key,
-                weekStart: ws,
-                weekEnd: we,
-                label: `Week ${idx}: ${format(ws, "dd MMM")} - ${format(we, "dd MMM")}`,
-            });
-            idx += 1;
-        }
-
-        cursor = addWeeks(cursor, 1);
-    }
-
-    return weeks;
+            <RadioGroup
+                row
+                value={value === null ? "" : value ? "yes" : "no"}
+                onChange={(e) => onChange(e.target.value === "yes")}
+            >
+                <FormControlLabel value="yes" control={<Radio />} label="Yes" />
+                <FormControlLabel value="no" control={<Radio />} label="No" />
+            </RadioGroup>
+        </FormControl>
+    );
 }
+
+const defaultValues: ComplianceAnswers = {
+    ptsSavedTillMonth: false,
+    cofyUpdated: false,
+    citiTrainingCompleted: false,
+};
 
 export default function AddTimeSheet() {
     const [month, setMonth] = React.useState<Date>(new Date());
-
+    const [complianceValues, setComplianceValues] = React.useState<ComplianceAnswers>(
+        defaultValues
+    );
     // Values saved per month (so switching months keeps different drafts)
     const monthKey = format(month, "yyyy-MM");
     const storageKey = `weekly-form:${monthKey}`;
 
-    const weeks = React.useMemo(() => getWeeksForMonth(month), [month]);
+    const weeks = React.useMemo(() => getWeeksLabelForMonth(month) as WeekRow[], [month]);
 
     const [values, setValues] = React.useState<Record<string, string>>({});
 
@@ -139,22 +133,7 @@ export default function AddTimeSheet() {
         // await api.post("/weekly-inputs", payload)
     };
 
-    const [open, setOpen] = React.useState(false);
-
-    const [compliance, setCompliance] =
-        React.useState<ComplianceAnswers | null>(null);
-
-    const [isComplianceChecked, setIsComplianceChecked] = React.useState(false);
-
-    const handleApply = (v: ComplianceAnswers) => {
-        setCompliance(v);
-        setIsComplianceChecked(compliance?.ptsSavedTillMonth !== null &&
-        compliance?.cofyUpdated !== null &&
-        compliance?.citiTrainingCompleted !== null)
-        setOpen(false);
-    };
-
-    return (
+      return (
         <Paper elevation={3} sx={{ maxWidth: 900, mx: "auto", mt: 4, p: 3 }}>
             {/* Header */}
             <Box
@@ -169,74 +148,102 @@ export default function AddTimeSheet() {
                     Weekly Inputs
                 </Typography>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Button type="button" variant="contained" sx={{ px: 4 }} onClick={handlePrev}>
-                        Prev
-                    </Button>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        px: 2,
+                        py: 1,
+                        gap: 4
+                    }}
+                >
+                    {/* Previous */}
+                    <IconButton onClick={handlePrev}>
+                        <ChevronLeftIcon />
+                    </IconButton>
 
-                    <Typography fontWeight={700} sx={{ minWidth: 160, textAlign: "center" }}>
+                    {/* Month Label */}
+                    <Typography
+                        fontWeight={700}
+                        sx={{
+                            textAlign: "center",
+                            fontSize: "18px",
+                            flex: 1,
+                        }}
+                    >
                         {format(month, "MMMM yyyy")}
                     </Typography>
-                    <Button type="button" variant="contained" sx={{ px: 4 }} onClick={handleNext}>
-                        Next
-                    </Button>
+
+                    {/* Next */}
+                    <IconButton onClick={handleNext}>
+                        <ChevronRightIcon />
+                    </IconButton>
                 </Box>
+
             </Box>
 
             <Divider sx={{ my: 2 }} />
+            <Box paddingLeft={10} paddingRight={10} >
+                {/* Week inputs */}
+                <Stack spacing={2} >
+                    {weeks.map((w) => (
+                        <Box
+                            key={w.key}
+                            sx={{
+                                display: "grid",
+                                gridTemplateColumns: { xs: "1fr", sm: "80px 1fr" },
+                                gap: 2,
+                                alignItems: "center",
+                            }}
+                        >
+                            <Typography fontWeight={300}>{w.label}</Typography>
 
-            {/* Week inputs */}
-            <Stack spacing={2}>
-                {weeks.map((w) => (
-                    <Box
-                        key={w.key}
-                        sx={{
-                            display: "grid",
-                            gridTemplateColumns: { xs: "1fr", sm: "240px 1fr" },
-                            gap: 2,
-                            alignItems: "center",
-                        }}
-                    >
-                        <Typography fontWeight={300}>{w.label}</Typography>
+                            <TextField
+                                size="small"
+                                fullWidth
+                                placeholder="Enter value .."
+                                value={values[w.key] ?? ""}
+                                onChange={(e) => onChangeWeek(w.key, e.target.value)}
+                            />
+                        </Box>
+                    ))}
+                </Stack>
 
-                        <TextField
-                            size="small"
-                            fullWidth
-                            placeholder="Enter value .."
-                            value={values[w.key] ?? ""}
-                            onChange={(e) => onChangeWeek(w.key, e.target.value)}
-                        />
-                    </Box>
-                ))}
-            </Stack>
-            <>
-                <FormControlLabel
-                    control={
-                        <Checkbox
-                            checked={isComplianceChecked}
-                            onClick={() => setOpen(true)}
-                        />
-                    }
-                    label="Compliance checklist (click to review)"
-                />
+                <Stack spacing={3} marginTop={5}>
+                    <YesNoQuestion
+                        label="PTS saved till month?"
+                        value={complianceValues.ptsSavedTillMonth}
+                        onChange={(v) =>
+                            setComplianceValues((p) => ({ ...p, ptsSavedTillMonth: v }))
+                        }
+                    />
 
-                <ComplianceModal
-                    open={open}
-                    initialValues={compliance ?? undefined}
-                    onClose={() => setOpen(false)}
-                    onApply={handleApply}
-                />
-            </>
+                    <YesNoQuestion
+                        label="Cofy updated?"
+                        value={complianceValues.cofyUpdated}
+                        onChange={(v) => setComplianceValues((p) => ({ ...p, cofyUpdated: v }))}
+                    />
 
-            {/* Actions */}
-            <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
-                <Button variant="outlined" onClick={handleSave}>
-                    Save
-                </Button>
+                    <YesNoQuestion
+                        label="Citi training completed?"
+                        value={complianceValues.citiTrainingCompleted}
+                        onChange={(v) =>
+                            setComplianceValues((p) => ({ ...p, citiTrainingCompleted: v }))
+                        }
+                    />
+                </Stack>
+                {/* Actions */}
+                <Box sx={{ mt: 3, display: "flex", gap: 2 }}>
+                    <Button variant="outlined" onClick={handleSave}>
+                        Save
+                    </Button>
 
-                <Button variant="contained" onClick={handleSubmit}>
-                    Submit
-                </Button>
+                    <Button variant="contained" onClick={handleSubmit}>
+                        Submit
+                    </Button>
+                </Box>
+
             </Box>
         </Paper>
     );
