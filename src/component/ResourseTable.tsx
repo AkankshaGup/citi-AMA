@@ -7,37 +7,47 @@ import {
     TableHead,
     TableRow,
     Paper,
-    Chip,
     TablePagination,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    Button,
+    Backdrop,
+    CircularProgress,
+    Alert,
     Box,
+    Chip,
     Typography,
 } from "@mui/material";
+
+import { addMonths, subMonths, startOfMonth, format } from "date-fns";
 import { api } from "../api/axiosInstance";
 import StatusChip from "../generic/StatusChip";
-import { getWeeksInCurrentMonth,getCurrentDateInfo } from "../utils/dateUtils";
-import {resourceTimesheetData} from "../metadata/metadata";
+import { getWeeksInCurrentMonth } from "../utils/dateUtils";
+import { resourceTimesheetData } from "../metadata/metadata";
+import { TimesheetHeader } from "./timesheet/TimesheetHeader.tsx";
+import ResourseDialog from "./ResourseDialog.tsx";
 interface IResourseTable {
     sowId: string
 }
 
 const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
     console.log(resourceTimesheetData)
-    const {year, month} = getCurrentDateInfo();
+
+    const currentMonthStart = React.useMemo(() => startOfMonth(new Date()), []);
+    const [month, setMonth] = React.useState<Date>(currentMonthStart);
     const [resourceData, setResourceData] = useState<any[]>([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [totalCount, setTotalCount] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [openModal, setOpenModal] = useState(false);
     const [selectedRow, setSelectedRow] = useState<any>(null);
     const totalWeeks = getWeeksInCurrentMonth();
     const fetchTeamResources = async () => {
+        setLoading(true);
+        setErrorMsg(null);
         try {
-            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&month=${year}-${month}&page=${page}&size=${rowsPerPage}`);
+            const yearStr = format(month, "yyyy");
+            const monthStr = format(month, "MM");
+            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&year=${yearStr}&month=${monthStr}&page=${page}&size=${rowsPerPage}`);
             // Expecting paginated response with `content` and pagination metadata
             const data = res.data;
             if (data && Array.isArray(data.content)) {
@@ -53,15 +63,19 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
             }
 
         } catch (err) {
-            // fallback metadata object
+            // fallback metadata object and surface an error message
             const fallback = (resourceTimesheetData as any);
             setResourceData(Array.isArray(fallback.content) ? fallback.content : []);
             setTotalCount(typeof fallback.totalElements === 'number' ? fallback.totalElements : (Array.isArray(fallback.content) ? fallback.content.length : 0));
+            setErrorMsg(err instanceof Error ? err.message : String(err));
+        } finally {
+            setLoading(false);
         }
     }
     useEffect(() => {
         fetchTeamResources();
-    }, [sowId, page, rowsPerPage]);
+    }, [sowId, page, rowsPerPage, month]);
+
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -115,9 +129,26 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
         { key: "cofyUpdate", label: "CoFY Updated", width: 6, render: (value: boolean) => <StatusChip value={value} /> },
         { key: "citiTraining", label: "Trainings", width: 6, render: (value: boolean) => <StatusChip value={value} /> });
 
+    const handlePrev = () => {
+        setMonth((m) => subMonths(m, 1));
+    };
 
+    const handleNext = () => {
+
+        setMonth((m) => addMonths(m, 1));
+    };
+    const monthTitle = format(month, "MMMM yyyy");
     return (<>
-        <TableContainer component={Paper}>
+        <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+            <CircularProgress color="inherit" />
+        </Backdrop>
+        {errorMsg && (
+            <Alert severity="error" onClose={() => setErrorMsg(null)} sx={{ mb: 2 }}>
+                {errorMsg}
+            </Alert>
+        )}
+        <TimesheetHeader title='' monthTitle={monthTitle} onPrev={handlePrev} onNext={handleNext} />
+        <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small" sx={{ tableLayout: "fixed", width: "100%" }}>
                 <TableHead>
                     <TableRow
@@ -148,14 +179,13 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
 
                 <TableBody>
                     {paginatedData.map((row, rowIndex) => (
-                        <TableRow 
+                        <TableRow
                             key={row.employeeId || rowIndex}
                             onClick={() => handleRowClick(row)}
                             sx={{ cursor: "pointer", "&:hover": { backgroundColor: "#f5f5f5" } }}
                         >
                             {columns.map((col) => {
                                 let value = (row as any)[col.key];
-                                // special handling for serial number column
                                 if (col.key === 'sno') {
                                     value = (page * rowsPerPage) + rowIndex + 1;
                                 }
@@ -190,111 +220,14 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
             />
         </TableContainer>
 
-        <Dialog open={openModal} onClose={handleCloseModal} maxWidth="sm" fullWidth>
-            <DialogTitle>
-                {selectedRow?.name} - {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
-            </DialogTitle>
-            <DialogContent>
-                {selectedRow && (
-                    <Box sx={{ mt: 2 }}>
-                        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 1 }}>
-                            {(() => {
-                                try {
-                                    const now = new Date();
-                                    const year = now.getFullYear();
-                                    const month = now.getMonth() + 1;
-
-                                    const timesheets = JSON.parse(selectedRow.timesheets || "[]");
-                                    const leaves = JSON.parse(selectedRow.leaves || "[]");
-                                    const holidays = JSON.parse(selectedRow.holidays || "[]");
-
-                                    // Create maps for quick lookup
-                                    const timesheetMap = new Map();
-                                    timesheets.forEach((sheet: any) => {
-                                        const date = sheet.workDate.split("-")[2];
-                                        timesheetMap.set(date, sheet.hoursLogged);
-                                    });
-
-                                    const leaveSet = new Set();
-                                    leaves.forEach((leave: any) => {
-                                        const date = leave.startDate.split("-")[2];
-                                        leaveSet.add(date);
-                                    });
-
-                                    const holidaySet = new Set();
-                                    holidays.forEach((holiday: any) => {
-                                        const date = holiday.date.split("-")[2];
-                                        holidaySet.add(date);
-                                    });
-
-                                    // Generate calendar dynamically for current month
-                                    const daysInMonth = new Date(year, month, 0).getDate();
-                                    const calendarDays = [];
-
-                                    for (let day = 1; day <= daysInMonth; day++) {
-                                        const dayStr = String(day).padStart(2, "0");
-                                        const hours = timesheetMap.get(dayStr);
-                                        const isLeave = leaveSet.has(dayStr);
-                                        const isHoliday = holidaySet.has(dayStr);
-
-                                        calendarDays.push(
-                                            <Box
-                                                key={day}
-                                                sx={{
-                                                    border: "1px solid #ddd",
-                                                    borderRadius: "4px",
-                                                    padding: "8px",
-                                                    minHeight: "40px",
-                                                    backgroundColor: isHoliday ? "#ffe0e0" : isLeave ? "#fff3cd" : "#f9f9f9",
-                                                    display: "flex",
-                                                    flexDirection: "column",
-                                                    justifyContent: "space-between",
-                                                }}
-                                            >
-                                                <Typography sx={{ fontWeight: 600, fontSize: "14px" }}>
-                                                    {day}
-                                                </Typography>
-                                                {hours && (
-                                                    <Typography sx={{ fontSize: "12px", color: "#555" }}>
-                                                        {hours} hrs
-                                                    </Typography>
-                                                )}
-                                                <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-                                                    {isLeave && (
-                                                        <Chip
-                                                            label="L"
-                                                            size="small"
-                                                            sx={{ backgroundColor: "#ffc107", color: "#000", fontWeight: 600, height: 20 }}
-                                                        />
-                                                    )}
-                                                    {isHoliday && (
-                                                        <Chip
-                                                            label="H"
-                                                            size="small"
-                                                            sx={{ backgroundColor: "#f44336", color: "#fff", fontWeight: 600, height: 20 }}
-                                                        />
-                                                    )}
-                                                </Box>
-                                            </Box>
-                                        );
-                                    }
-
-                                    return calendarDays;
-                                } catch (e) {
-                                    return <Typography>Error loading calendar data</Typography>;
-                                }
-                            })()}
-                        </Box>
-                    </Box>
-                )}
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={handleCloseModal} variant="contained">
-                    Close
-                </Button>
-            </DialogActions>
-        </Dialog>
-        </>
+        <ResourseDialog
+            open={openModal}
+            onClose={handleCloseModal}
+            selectedRow={selectedRow}
+            year={format(month, "yyyy")}
+            month={format(month, "MM")}
+        />
+    </>
     );
 };
 
