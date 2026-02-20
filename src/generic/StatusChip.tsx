@@ -9,7 +9,7 @@ const StatusChip: React.FC<StatusChipProps> = ({ value }) => {
     <Chip
       label={value ? "Yes" : "No"}
       size="small"
-      color={value ? "success" : "default"}
+      color={value ? "success" : "error"}
       variant={value ? "filled" : "outlined"}
       sx={{
         minWidth: 52,

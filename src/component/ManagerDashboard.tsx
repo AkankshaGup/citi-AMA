@@ -75,7 +75,6 @@ export default function ManagerDashboard() {
 				</Button>
 			</Box>
 
-			{/* ✅ Pass only sowId to table */}
 			{selectedSow?.sowId && (
 				<ResourseTable sowId={selectedSow.sowId} />
 			)}
