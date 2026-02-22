@@ -13,7 +13,7 @@ export function TimesheetGridHeader() {
       }}
     >
       {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-        <Typography key={d} variant="caption" fontWeight={800} sx={{ textAlign: "center" }}>
+        <Typography key={d} variant="body2" fontWeight={800} sx={{ textAlign: "center",fontFamily: "Inter, Roboto, sans-serif" }}>
           {d}
         </Typography>
       ))}

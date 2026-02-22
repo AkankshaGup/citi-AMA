@@ -17,6 +17,7 @@ export function WeekRow(props: {
 }) {
   const { week, month, values, isHoliday, isWeekend, holidayName, weekTotal, onChangeDay } = props;
 
+
   return (
     <Box
       key={dayKey(week.weekStart)}

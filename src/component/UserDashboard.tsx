@@ -19,7 +19,7 @@ const UserDashboard = () => {
         aria-label="User Dashboard Tabs"
       >
         <Tab label="Leave Forecast" />
-        <Tab label="Weekly Actuals" />
+        <Tab label="Citi Compliance" />
       </Tabs>
 
       {/* Tabs Content */}
