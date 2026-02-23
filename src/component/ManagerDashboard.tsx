@@ -1,10 +1,11 @@
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import { TimesheetHeader } from "./timesheet/TimesheetHeader.tsx";
 import ResourseTable from "./ResourseTable";
 import { api } from "../api/axiosInstance";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { addMonths, subMonths, startOfMonth, format } from "date-fns";
 import { auth } from "../auth/auth";
 import { Typography } from "@mui/material";
 import { mockTeamData } from "../metadata/metadata";
@@ -16,6 +17,8 @@ interface TeamResource {
 }
 
 export default function ManagerDashboard() {
+	const currentMonthStart = React.useMemo(() => startOfMonth(new Date()), []);
+	const [month, setMonth] = React.useState<Date>(currentMonthStart);
 	const [teamData, setTeamData] = useState<TeamResource[]>([]);
 	const [selectedSow, setSelectedSow] = useState<TeamResource | null>(null);
 	const user = auth.getUser();
@@ -35,9 +38,18 @@ export default function ManagerDashboard() {
 		fetchTeam();
 	}, []);
 
+    const handlePrev = () => {
+        setMonth((m) => subMonths(m, 1));
+    };
+
+    const handleNext = () => {
+
+        setMonth((m) => addMonths(m, 1));
+    };
+    const monthTitle = format(month, "MMMM yyyy");
 	return (
 		<>
-			<Box display="flex" justifyContent="space-between" marginBottom={4}>
+			<Box display="flex" justifyContent="space-between" marginBottom={4} marginTop={2}>
 				<Autocomplete
 					disablePortal
 					options={teamData}
@@ -64,7 +76,8 @@ export default function ManagerDashboard() {
 					)}
 				/>
 
-				<Button
+        <TimesheetHeader title='' monthTitle={monthTitle} onPrev={handlePrev} onNext={handleNext} />
+				{/* <Button
 					variant="contained"
 					sx={{
 						background:
@@ -72,11 +85,11 @@ export default function ManagerDashboard() {
 					}}
 				>
 					Export
-				</Button>
+				</Button> */}
 			</Box>
 
 			{selectedSow?.sowId && (
-				<ResourseTable sowId={selectedSow.sowId} />
+				<ResourseTable sowId={selectedSow.sowId} month={month} />
 			)}
 		</>
 	);

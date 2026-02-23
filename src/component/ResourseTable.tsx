@@ -11,27 +11,20 @@ import {
     Backdrop,
     CircularProgress,
     Alert,
-    Box,
-    Chip,
-    Typography,
 } from "@mui/material";
-
-import { addMonths, subMonths, startOfMonth, format } from "date-fns";
+import { format } from "date-fns";
 import { api } from "../api/axiosInstance";
 import StatusChip from "../generic/StatusChip";
 import { getWeeksInCurrentMonth } from "../utils/dateUtils";
 import { resourceTimesheetData } from "../metadata/metadata";
-import { TimesheetHeader } from "./timesheet/TimesheetHeader.tsx";
 import ResourseDialog from "./ResourseDialog.tsx";
+
 interface IResourseTable {
     sowId: string
+    month: Date
 }
 
-const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
-    console.log(resourceTimesheetData)
-
-    const currentMonthStart = React.useMemo(() => startOfMonth(new Date()), []);
-    const [month, setMonth] = React.useState<Date>(currentMonthStart);
+const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTable) => {
     const [resourceData, setResourceData] = useState<any[]>([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -146,15 +139,6 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
         { key: "cofyUpdate", label: "CoFY Updated", width: 6, render: (value: boolean) => <StatusChip value={value} /> },
         { key: "citiTraining", label: "Trainings", width: 5, render: (value: boolean) => <StatusChip value={value} /> });
 
-    const handlePrev = () => {
-        setMonth((m) => subMonths(m, 1));
-    };
-
-    const handleNext = () => {
-
-        setMonth((m) => addMonths(m, 1));
-    };
-    const monthTitle = format(month, "MMMM yyyy");
     return (<>
         <Backdrop open={loading} sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
             <CircularProgress color="inherit" />
@@ -164,7 +148,6 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
                 {errorMsg}
             </Alert>
         )}
-        <TimesheetHeader title='' monthTitle={monthTitle} onPrev={handlePrev} onNext={handleNext} />
         <TableContainer component={Paper} sx={{ mt: 2 }}>
             <Table size="small" sx={{ tableLayout: "fixed", width: "100%" }}>
                 <TableHead>
