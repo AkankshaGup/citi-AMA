@@ -47,7 +47,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
         try {
             const yearStr = format(month, "yyyy");
             const monthStr = format(month, "MM");
-            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&year=${yearStr}-${monthStr}&page=${page}&size=${rowsPerPage}`);
+            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&month=${yearStr}-${monthStr}&page=${page}&size=${rowsPerPage}`);
             // Expecting paginated response with `content` and pagination metadata
             const data = res.data;
             if (data && Array.isArray(data.content)) {
