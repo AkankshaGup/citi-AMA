@@ -11,7 +11,7 @@ export function WeekRow(props: {
   values: Record<string, DayCode>;
   isHoliday: (d: Date) => boolean;
   isWeekend: (d: Date) => boolean;
-  holidayName?: (d: Date) => string | undefined; // ✅ NEW: holiday name getter
+  holidayName?: (d: Date) => string | undefined; // NEW: holiday name getter
   weekTotal: number;
   onChangeDay: (d: Date, v: DayCode) => void;
 }) {

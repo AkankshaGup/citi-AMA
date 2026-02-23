@@ -19,7 +19,10 @@ import {
 } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { addMonths, subMonths, format } from "date-fns";
+import {
+    addMonths, subMonths, format, startOfMonth, endOfMonth, max as dfMax,
+    min as dfMin,
+} from "date-fns";
 import { getWeeksLabelForMonth } from "../utils/dateUtils";
 import type { WeekRow } from "../types/timesheetTypes";
 import { type ComplianceAnswers } from "./modal/ComplianceModal";
@@ -122,11 +125,22 @@ async function postCitiCompliance(body: SubmitBody) {
     return res.data;
 }
 
+function clampWeekToMonth(month: Date, w: WeekRow) {
+    const ms = startOfMonth(month);
+    const me = endOfMonth(month);
+
+    const start = dfMax([w.weekStart, ms]);
+    const end = dfMin([w.weekEnd, me]);
+
+    return { start, end };
+}
+
 // NEW: GET API for prefill
 async function fetchWeeklyTimesheet(employeeId: string, monthKey: string): Promise<GetResponse> {
     const res = await api.get(`/public/weekly-timesheets`, {
         params: { userId: employeeId, month: monthKey },
     });
+
     return res.data as GetResponse;
 }
 
@@ -185,15 +199,18 @@ export default function AddTimeSheet() {
 
             try {
                 const resp = await fetchWeeklyTimesheet(employeeId, monthKey);
+                console.log("Fetched timesheet data:", resp);
                 if (!alive) return;
 
                 // 1) prefill week values based on weekStartDate+weekEndDate match
                 const nextValues: Record<string, string> = {};
                 for (const w of weeks) {
+                    const { start, end } = clampWeekToMonth(month, w);
+
                     const match = resp.timeSheet?.find(
                         (t) =>
-                            t.weekStartDate === format(w.weekStart, "yyyy-MM-dd") &&
-                            t.weekEndDate === format(w.weekEnd, "yyyy-MM-dd")
+                            t.weekStartDate === format(start, "yyyy-MM-dd") &&
+                            t.weekEndDate === format(end, "yyyy-MM-dd")
                     );
                     if (match) nextValues[w.key] = String(match.totalHours ?? "");
                 }
@@ -259,11 +276,15 @@ export default function AddTimeSheet() {
         cofy: complianceValues.cofyUpdated,
         citiTraining: complianceValues.citiTrainingCompleted,
         complianceSubmit,
-        timeSheet: weeks.map((w) => ({
-            weekStartDate: format(w.weekStart, "yyyy-MM-dd"),
-            weekEndDate: format(w.weekEnd, "yyyy-MM-dd"),
-            totalHours: Number(toHours(values[w.key] ?? "").toFixed(2)),
-        })),
+        timeSheet: weeks.map((w) => {
+            const { start, end } = clampWeekToMonth(month, w);
+
+            return {
+                weekStartDate: format(start, "yyyy-MM-dd"),
+                weekEndDate: format(end, "yyyy-MM-dd"),
+                totalHours: Number(toHours(values[w.key] ?? "").toFixed(2)),
+            };
+        }),
     });
 
     const handleSave = async () => {
@@ -299,6 +320,7 @@ export default function AddTimeSheet() {
 
         try {
             setSubmitting(true);
+            console.log("Submitting body:", buildSubmitBody(true));
             await postCitiCompliance(buildSubmitBody(true));
             setSuccessMsg("Submitted successfully.");
         } catch (e) {
