@@ -41,29 +41,40 @@ function YesNoQuestionCompact({
     helperText?: string;
 }) {
     return (
-        <FormControl error={!!error} sx={{ minWidth: 0 }}>
-            <FormLabel sx={{ mb: 0.5 }}>
-                <Typography fontWeight={600} fontSize={13}>
-                    {label}
-                </Typography>
-            </FormLabel>
+        <Box
+            sx={{
+                p: 1.25,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.75,
+                bgcolor: "background.paper",
+                "&:last-of-type": { borderRight: "none" },
+            }}
+        >
+            <FormControl error={!!error} sx={{ minWidth: 0 }}>
+                <FormLabel sx={{ mb: 0.5 }}>
+                    <Typography fontWeight={600} fontSize={13}>
+                        {label}
+                    </Typography>
+                </FormLabel>
 
-            <RadioGroup
-                row
-                value={value === null ? "" : value ? "yes" : "no"}
-                onChange={(e) => onChange(e.target.value === "yes")}
-                sx={{ gap: 1, "& .MuiFormControlLabel-root": { mr: 1 } }}
-            >
-                <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
-                <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
-            </RadioGroup>
+                <RadioGroup
+                    row
+                    value={value === null ? "" : value ? "yes" : "no"}
+                    onChange={(e) => onChange(e.target.value === "yes")}
+                    sx={{ gap: 1, "& .MuiFormControlLabel-root": { mr: 1 } }}
+                >
+                    <FormControlLabel value="yes" control={<Radio size="small" />} label="Yes" />
+                    <FormControlLabel value="no" control={<Radio size="small" />} label="No" />
+                </RadioGroup>
 
-            {error && helperText ? (
-                <Typography variant="caption" color="error" sx={{ mt: 0.25 }}>
-                    {helperText}
-                </Typography>
-            ) : null}
-        </FormControl>
+                {error && helperText ? (
+                    <Typography variant="caption" color="error" sx={{ mt: 0.25 }}>
+                        {helperText}
+                    </Typography>
+                ) : null}
+            </FormControl>
+        </Box>
     );
 }
 
@@ -113,8 +124,8 @@ async function postCitiCompliance(body: SubmitBody) {
 
 // NEW: GET API for prefill
 async function fetchWeeklyTimesheet(employeeId: string, monthKey: string): Promise<GetResponse> {
-    const res = await api.get(`/public/weekly-timesheets/employee/${encodeURIComponent(employeeId)}`, {
-        params: { month: monthKey },
+    const res = await api.get(`/public/weekly-timesheets`, {
+        params: { userId: employeeId, month: monthKey },
     });
     return res.data as GetResponse;
 }
@@ -408,7 +419,7 @@ export default function AddTimeSheet() {
                 {/* Compliance row (3 columns) */}
                 <Box
                     sx={{
-                        mt: 4,
+                        mt: 0,
                         display: "grid",
                         gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
                         gap: 2,
