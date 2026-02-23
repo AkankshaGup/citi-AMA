@@ -113,8 +113,8 @@ async function postCitiCompliance(body: SubmitBody) {
 
 // NEW: GET API for prefill
 async function fetchWeeklyTimesheet(employeeId: string, monthKey: string): Promise<GetResponse> {
-    const res = await api.get(`/public/weekly-timesheets/employee/${encodeURIComponent(employeeId)}`, {
-        params: { month: monthKey },
+    const res = await api.get(`/public/weekly-timesheets`, {
+        params: { userId: employeeId ,month: monthKey },
     });
     return res.data as GetResponse;
 }
