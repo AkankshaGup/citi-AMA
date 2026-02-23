@@ -99,6 +99,13 @@ export default function LeaveForecastPage() {
 
   const isHoliday = React.useCallback((d: Date) => !!holidayMap[dayKey(d)], [holidayMap]);
   const isDisabledDay = React.useCallback((d: Date) => isHoliday(d) || isWeekend(d), [isHoliday]);
+  const isDisabledNotWeekend = React.useCallback(
+    (d: Date) => {
+      const isPrevMonth = isBefore(startOfMonth(d), currentMonthStart);
+      return isHoliday(d) || isPrevMonth;
+    },
+    [isHoliday, currentMonthStart]
+  );
   const holidayName = React.useCallback((d: Date) => holidayMap[dayKey(d)], [holidayMap]);
 
   const loadMonth = React.useCallback(
@@ -186,7 +193,7 @@ export default function LeaveForecastPage() {
 
   const setDayValue = (d: Date, code: DayCode) => {
     if (!isSameMonth(d, month)) return;
-    if (isDisabledDay(d)) return;
+    if (isDisabledNotWeekend(d)) return;
     setValues((prev) => ({ ...prev, [dayKey(d)]: code }));
   };
 
