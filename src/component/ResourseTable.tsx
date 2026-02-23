@@ -47,7 +47,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
         try {
             const yearStr = format(month, "yyyy");
             const monthStr = format(month, "MM");
-            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&year=${yearStr}&month=${monthStr}&page=${page}&size=${rowsPerPage}`);
+            const res = await api.get(`/public/reports/monthly?sowId=${sowId}&year=${yearStr}-${monthStr}&page=${page}&size=${rowsPerPage}`);
             // Expecting paginated response with `content` and pagination metadata
             const data = res.data;
             if (data && Array.isArray(data.content)) {
@@ -100,20 +100,21 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
     const paginatedData = resourceData;
     const columns: { key: string; label: string; width?: number; render?: (v: any, i?: number, row?: any) => React.ReactNode }[] = [
         { key: "sno", label: "S.No", width: 3, render: (_v, i) => (i ?? 0) + 1 },
-        { key: "location", label: "Location", width: 6 },
+        { key: "location", label: "Location", width: 4 },
         { key: "employeeId", label: "Emp ID", width: 4 },
         { key: "soeId", label: "SOE ID", width: 4 },
-        { key: "name", label: "Resource Name", width: 10 },
-        { key: "assignmentStartDate", label: "Start Date", width: 6 },
+        { key: "name", label: "Resource Name", width: 6 },
+        { key: "assignmentStartDate", label: "Start Date", width: 4},
         { key: "numberOfHalfDays", label: "Half Day", width: 4 },
         { key: "numberOfLeaves", label: "Leave", width: 3 },
         { key: "numberOfHolidays", label: "Holiday", width: 4 },
+        { key: "totalHours", label: "Capacity", width: 4 }
     ];
     for (let i = 1; i <= totalWeeks; i++) {
         columns.push({
             key: `week${i}`,
-            label: `W${i}`,
-            width: 2,
+            label: `PTS W${i}`,
+            width: 4,
             render: (_v, _i, row) => {
                 const weeklyHours = JSON.parse(row.weeklyHours || "[]");
                 const weekData = weeklyHours[i - 1];
@@ -124,10 +125,26 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
         });
     }
 
-    columns.push({ key: "totalHours", label: "TH", width: 2 },
-        { key: "ptsSaved", label: "PTS Saved", width: 6, render: (value: boolean) => <StatusChip value={value} /> },
+    columns.push(
+        {
+            key: "totalPtsHours",
+            label: "Total PTS hrs",
+            width: 4,
+            render: (_v, _i, row) => {
+                try {
+                    const weeklyHours = JSON.parse(row.weeklyHours || "[]");
+                    const total = Array.isArray(weeklyHours)
+                        ? weeklyHours.reduce((s: number, w: any) => s + (Number(w?.hours) || 0), 0)
+                        : 0;
+                    return Number.isInteger(total) ? String(total) : total.toFixed(2);
+                } catch {
+                    return "-";
+                }
+            }
+        },
+        { key: "ptsSaved", label: "PTS Saved", width: 5, render: (value: boolean) => <StatusChip value={value} /> },
         { key: "cofyUpdate", label: "CoFY Updated", width: 6, render: (value: boolean) => <StatusChip value={value} /> },
-        { key: "citiTraining", label: "Trainings", width: 6, render: (value: boolean) => <StatusChip value={value} /> });
+        { key: "citiTraining", label: "Trainings", width: 5, render: (value: boolean) => <StatusChip value={value} /> });
 
     const handlePrev = () => {
         setMonth((m) => subMonths(m, 1));
@@ -162,12 +179,12 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
                                     fontWeight: 700,
                                     fontSize: "10px",
                                     color: "#000",
-                                    whiteSpace: "nowrap",
+                                    whiteSpace: "normal",
                                     width: `${col.width ?? 0}%`,
                                     borderRight: "1px solid rgba(0,0,0,0.12)",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    padding: "6px 8px",
+                                    overflowWrap: "break-word",
+                                    wordBreak: "break-word",
+                                    padding: "6px 4px",
                                 }}
                                 align="center"
                             >
@@ -195,9 +212,10 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId }: IResourseTable) => {
                                         fontSize: '10px',
                                         width: `${col.width ?? 0}%`,
                                         borderRight: "1px solid rgba(0,0,0,0.12)",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        padding: "6px 8px",
+                                        whiteSpace: 'normal',
+                                        overflowWrap: 'break-word',
+                                        wordBreak: 'break-word',
+                                        padding: "6px 4px",
                                     }}>
                                         {col.render
                                             ? col.render(value, rowIndex, row)
