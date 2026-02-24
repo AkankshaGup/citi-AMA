@@ -7,7 +7,7 @@ import { api } from "../api/axiosInstance";
 import React, { useEffect, useState } from "react";
 import { addMonths, subMonths, startOfMonth, format } from "date-fns";
 import { auth } from "../auth/auth";
-import { Typography } from "@mui/material";
+import { Typography, Button } from "@mui/material";
 import { mockTeamData } from "../metadata/metadata";
 
 interface TeamResource {
@@ -62,7 +62,7 @@ export default function ManagerDashboard() {
 							{option.sowName}
 						</Typography>
 					)}
-					sx={{ width: 300 }}
+					sx={{ width: 380 }}
 					renderInput={(params) => (
 						<TextField
 							{...params}
@@ -76,8 +76,7 @@ export default function ManagerDashboard() {
 					)}
 				/>
 
-        <TimesheetHeader title='' monthTitle={monthTitle} onPrev={handlePrev} onNext={handleNext} />
-				{/* <Button
+				<Button
 					variant="contained"
 					sx={{
 						background:
@@ -85,9 +84,10 @@ export default function ManagerDashboard() {
 					}}
 				>
 					Export
-				</Button> */}
+				</Button>
 			</Box>
 
+        <TimesheetHeader title='' monthTitle={monthTitle} onPrev={handlePrev} onNext={handleNext} />
 			{selectedSow?.sowId && (
 				<ResourseTable sowId={selectedSow.sowId} month={month} />
 			)}
