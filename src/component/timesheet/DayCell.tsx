@@ -76,12 +76,22 @@ export function DayCell(props: {
             <em>Select</em>
           </MenuItem>
 
-          {OPTIONS.map((opt) => (
-            (opt === "H" && !isHoliday) || (opt === "W" && !isWeekend) ? null : // hide H/W if not applicable
-            <MenuItem key={opt} value={opt}>
-              {opt}
-            </MenuItem>
-          ))}
+          {OPTIONS.map((opt) => {
+            // Hide H if not holiday
+            if (opt === "H" && !isHoliday) return null;
+
+            // Hide W if not weekend
+            if (opt === "W" && !isWeekend) return null;
+
+            // Hide L if it's holiday OR weekend
+            if (opt === "L" && (isHoliday || isWeekend)) return null;
+
+            return (
+              <MenuItem key={opt} value={opt}>
+                {opt}
+              </MenuItem>
+            );
+          })}
         </Select>
       </FormControl>
     </Box>
