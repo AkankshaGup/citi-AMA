@@ -2,7 +2,7 @@ import { getDay, isAfter, startOfMonth, endOfMonth, addDays, isSameMonth, parseI
 import type { ApiPayload, DayCode, MockApiResponse, WeekRow, SubmitPayload } from "../types/timesheetTypes";
 import { apiDayKey, dayKey } from "./dateUtils";
 
-export const OPTIONS: DayCode[] = ["8", "4", "12", "L"];
+export const OPTIONS: DayCode[] = ["8", "4", "12", "L","H", "W"];
 
 export function buildSubmitPayload(params: {
   employeeId: string;
@@ -77,7 +77,7 @@ export function parseApiKeyToDate(k: string): Date | null {
 }
 
 export function weekTotal(w: WeekRow, month: Date, values: Record<string, DayCode>) {
-  return w.days.reduce((sum, d) => {
+  return w?.days.reduce((sum, d) => {
     if (!isSameMonth(d, month)) return sum;
     return sum + codeToHours(values[dayKey(d)] ?? "");
   }, 0);

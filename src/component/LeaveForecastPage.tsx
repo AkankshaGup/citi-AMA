@@ -1,9 +1,10 @@
+// LeaveForecastPage.tsx
 import * as React from "react";
 import { Alert, Backdrop, CircularProgress, Divider, Paper, Snackbar, Stack } from "@mui/material";
 import { addMonths, subMonths, format, isBefore, isSameMonth, startOfMonth } from "date-fns";
 
 import type { DayCode } from "../types/timesheetTypes";
-// import { fetchLeaveForecastMock } from "../mock/mockData";
+import { fetchLeaveForecastMock } from "../mock/mockData";
 
 import { dayKey, getRequiredDatesForMonth, getWeeksForMonth } from "../utils/dateUtils";
 import { isWeekend, weekTotal as calcWeekTotal } from "../utils/timesheetUtils";
@@ -49,12 +50,11 @@ type ApiHoliday = { date: string; name: string; type?: string };
 type GetApiItem = {
   employeeId: string;
   sowId: string;
-  timesheets: string; // JSON string
-  leaves: string; // JSON string
-  holidays: string; // JSON string
+  timesheets: string;
+  leaves: string;
+  holidays: string;
 };
 
-// API may return either {content:[...]} OR a direct object
 type GetApiResponse = { content: GetApiItem[] } | GetApiItem;
 
 type SubmitPayload = {
@@ -80,13 +80,14 @@ async function fetchLeaveForecastApi(userId: string, monthKey: string): Promise<
 export default function LeaveForecastPage() {
   const user = auth.getUser();
   const employeeId = user.userId; // submit payload
-  const userId = user.userId; // GET param (change to "e1" if backend expects different)
+  const userId = user.userId; // GET param
 
   const currentMonthStart = React.useMemo(() => startOfMonth(new Date()), []);
   const [month, setMonth] = React.useState<Date>(currentMonthStart);
 
   const [values, setValues] = React.useState<Record<string, DayCode>>({});
   const [holidayMap, setHolidayMap] = React.useState<Record<string, string>>({});
+  const [systemValueMap, setSystemValueMap] = React.useState<Record<string, DayCode>>({}); // H/W defaults only
 
   const [loading, setLoading] = React.useState(false);
   const [submitLoading, setSubmitLoading] = React.useState(false);
@@ -99,13 +100,16 @@ export default function LeaveForecastPage() {
 
   const isHoliday = React.useCallback((d: Date) => !!holidayMap[dayKey(d)], [holidayMap]);
   const isDisabledDay = React.useCallback((d: Date) => isHoliday(d) || isWeekend(d), [isHoliday]);
+
+  // Only block edits for previous months (holiday/weekend are editable)
   const isDisabledNotWeekend = React.useCallback(
     (d: Date) => {
       const isPrevMonth = isBefore(startOfMonth(d), currentMonthStart);
-      return isHoliday(d) || isPrevMonth;
+      return isPrevMonth;
     },
-    [isHoliday, currentMonthStart]
+    [currentMonthStart]
   );
+
   const holidayName = React.useCallback((d: Date) => holidayMap[dayKey(d)], [holidayMap]);
 
   const loadMonth = React.useCallback(
@@ -116,12 +120,12 @@ export default function LeaveForecastPage() {
 
       setValues({});
       setHolidayMap({});
+      setSystemValueMap({});
 
       try {
         // const resp = await fetchLeaveForecastMock(employeeId, key);
         const resp = await fetchLeaveForecastApi(userId, key);
 
-        // support both response shapes
         const item: GetApiItem | undefined =
           resp && typeof resp === "object" && "content" in resp
             ? (resp as { content: GetApiItem[] }).content?.[0]
@@ -133,7 +137,7 @@ export default function LeaveForecastPage() {
         const apiLeaves = safeJsonParse<ApiLeave[]>(item.leaves, []);
         const apiHolidays = safeJsonParse<ApiHoliday[]>(item.holidays, []);
 
-        // 1) holiday map (yyyy-MM-dd -> name)
+        // 1) Holiday map for display only (date -> name)
         const hm: Record<string, string> = {};
         for (const h of apiHolidays) {
           if (!h?.date) continue;
@@ -141,32 +145,51 @@ export default function LeaveForecastPage() {
         }
         setHolidayMap(hm);
 
-        // 2) values (hours + leaves)
+        // 2) Build values with priority: Hours > Leave > Defaults(H/W)
         const nextValues: Record<string, DayCode> = {};
+        const nextSystem: Record<string, DayCode> = {};
 
-        // Do NOT apply hours to holiday/weekend (per your requirement)
+        // A) apply hours FIRST (even if it's a holiday date, hours must win)
         for (const t of apiTimesheets) {
           if (!t?.workDate) continue;
           const d = new Date(t.workDate);
           if (!isSameMonth(d, targetMonth)) continue;
 
-          const disabled = !!hm[t.workDate] || isWeekend(d);
-          if (disabled) continue;
-
-          nextValues[t.workDate] = hoursToCode(Number(t.hoursLogged));
+          const code = hoursToCode(Number(t.hoursLogged));
+          if (code) nextValues[t.workDate] = code;
         }
 
+        // B) apply leaves SECOND (leave wins over holiday/weekend default)
         for (const l of apiLeaves) {
           if (!l?.startDate) continue;
           const d = new Date(l.startDate);
           if (!isSameMonth(d, targetMonth)) continue;
 
-          const disabled = !!hm[l.startDate] || isWeekend(d);
-          if (disabled) continue;
-
           nextValues[l.startDate] = "L";
         }
 
+        // C) fill system defaults only for dates still empty
+        for (const w of weeks) {
+          for (const d of w.days) {
+            if (!isSameMonth(d, targetMonth)) continue;
+
+            const k = dayKey(d);
+            if (nextValues[k]) continue; // hours/leave already present -> DO NOT set H/W
+
+            if (hm[k]) {
+              nextValues[k] = "H";
+              nextSystem[k] = "H";
+              continue;
+            }
+
+            if (isWeekend(d)) {
+              nextValues[k] = "W";
+              nextSystem[k] = "W";
+            }
+          }
+        }
+
+        setSystemValueMap(nextSystem);
         setValues(nextValues);
       } catch (e) {
         setErrorMsg(getAxiosErrMsg(e, "Failed to load month data"));
@@ -174,7 +197,7 @@ export default function LeaveForecastPage() {
         setLoading(false);
       }
     },
-    [userId]
+    [employeeId, userId, weeks]
   );
 
   React.useEffect(() => {
@@ -212,12 +235,14 @@ export default function LeaveForecastPage() {
   const handleSubmit = async () => {
     if (saveDisabled) return;
 
+    // - ignore H/W if unchanged
+    // - if user changes H/W to hours/leave => send it
     const leaveForecast = Object.entries(values)
-      .filter(([, v]) => v === "L")
+      .filter(([date, v]) => v === "L" && systemValueMap[date] !== "L")
       .map(([date]) => ({ date }));
 
     const timesheet = Object.entries(values)
-      .filter(([, v]) => v === "8" || v === "4" || v === "12")
+      .filter(([date, v]) => (v === "8" || v === "4" || v === "12") && systemValueMap[date] !== v)
       .map(([date, v]) => ({ date, hours: Number(v) }));
 
     const payload: SubmitPayload = { employeeId, leaveForecast, timesheet };
@@ -225,7 +250,6 @@ export default function LeaveForecastPage() {
     try {
       setSubmitLoading(true);
       setErrorMsg(null);
-      console.log("Submitting payload:", payload);
       await postTimesheetSave(payload);
       setSuccessOpen(true);
     } catch (e) {

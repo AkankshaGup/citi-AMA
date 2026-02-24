@@ -8,13 +8,23 @@ export function DayCell(props: {
   date: Date;
   month: Date;
   value: DayCode;
-  disabled: boolean; // now visual only
+  disabled: boolean; // visual only (holiday/weekend)
   isLeave: boolean;
+  holidayName?: string;
+  isWeekend: boolean;
+  isHoliday: boolean;
   onChange: (date: Date, val: DayCode) => void;
 }) {
-  const { date, month, value, disabled, isLeave, onChange } = props;
+  const { date, month, value, disabled, isLeave, holidayName, isWeekend, isHoliday, onChange } = props;
+
   const isPastMonth = isBefore(startOfMonth(month), startOfMonth(new Date()));
   if (!isSameMonth(date, month)) return <Box />;
+
+  // if a date is holiday/weekend it will be prefilled as H/W by LeaveForecastPage
+  const displayValue = value ?? "";
+
+  const isHolidayValue = displayValue === "H";
+  const isWeekendValue = displayValue === "W";
 
   return (
     <Box
@@ -25,65 +35,55 @@ export function DayCell(props: {
         borderRadius: 1,
         p: 0.75,
         minHeight: 64,
-        bgcolor:
-          disabled || isPastMonth
-            ? "action.disabledBackground"
-            : value == "4"
-              ? "#f0b17e"
-              : isLeave
-                ? "warning.light"
-                : "background.paper",
-        display: "flex",
-        flexDirection: "column",
-        gap: 0.5,
+        bgcolor: isPastMonth
+          ? "action.disabledBackground"
+          : isHolidayValue
+            ? "info.light"
+            : disabled || isWeekend
+              ? "action.disabledBackground"
+              : displayValue === "4"
+                ? "#f0b17e"
+                : isLeave
+                  ? "warning.light"
+                  : "background.paper",
+        display: "block",
       }}
     >
       <Typography variant="body2" sx={{ lineHeight: 1.1, opacity: 0.85 }}>
         {format(date, "dd MMM")}
+        {holidayName ? ` - ${holidayName}` : ""}
       </Typography>
 
       <FormControl fullWidth size="small" variant="outlined">
         <Select
-          value={value}
+          value={displayValue}
           disabled={isPastMonth}
           displayEmpty
           onChange={(e) => onChange(date, e.target.value as DayCode)}
           sx={{
-            "& .MuiOutlinedInput-notchedOutline": {
-              border: "none",
-            },
-            "&:hover .MuiOutlinedInput-notchedOutline": {
-              border: "none",
-            },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-              border: "none",
-            },
-            "& .MuiSelect-select": {
-              py: 0.75,
-            },
+            "& .MuiOutlinedInput-notchedOutline": { border: "none" },
+            "&:hover .MuiOutlinedInput-notchedOutline": { border: "none" },
+            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { border: "none" },
+            "& .MuiSelect-select": { py: 0.75 },
 
-            // Background conditions
-            ...(value == "4" && {
-              bgcolor: "#f0b17e",
-            }),
-
-            ...(disabled && {
-              bgcolor: "grey.200",
-            }),
+            ...(isPastMonth && { bgcolor: "grey.200" }),
+            ...(!isPastMonth && isHolidayValue && { bgcolor: "info.light" }),
+            ...(!isPastMonth && displayValue === "4" && { bgcolor: "#f0b17e" }),
+            ...(!isPastMonth && disabled && { bgcolor: "grey.200" }),
           }}
         >
-
           <MenuItem value="">
             <em>Select</em>
           </MenuItem>
+
           {OPTIONS.map((opt) => (
+            (opt === "H" && !isHoliday) || (opt === "W" && !isWeekend) ? null : // hide H/W if not applicable
             <MenuItem key={opt} value={opt}>
               {opt}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
-
     </Box>
   );
 }

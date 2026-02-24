@@ -1,5 +1,5 @@
-import { Box, Typography } from "@mui/material";
-import { format, isSameMonth } from "date-fns";
+import { Box } from "@mui/material";
+import { isSameMonth } from "date-fns";
 
 import type { DayCode, WeekRow as WeekRowType } from "../../types/timesheetTypes";
 import { dayKey } from "../../utils/dateUtils";
@@ -11,12 +11,11 @@ export function WeekRow(props: {
   values: Record<string, DayCode>;
   isHoliday: (d: Date) => boolean;
   isWeekend: (d: Date) => boolean;
-  holidayName?: (d: Date) => string | undefined; // NEW: holiday name getter
+  holidayName?: (d: Date) => string | undefined;
   weekTotal: number;
   onChangeDay: (d: Date, v: DayCode) => void;
 }) {
-  const { week, month, values, isHoliday, isWeekend, holidayName, weekTotal, onChangeDay } = props;
-
+  const { week, month, values, isHoliday, isWeekend, holidayName, onChangeDay } = props;
 
   return (
     <Box
@@ -28,53 +27,20 @@ export function WeekRow(props: {
         alignItems: "stretch",
       }}
     >
-
-      {/* Day cells */}
       {week.days.map((d) => {
         if (!isSameMonth(d, month)) return <Box key={dayKey(d)} />;
 
         const k = dayKey(d);
-        const holiday = isHoliday(d);
-        const weekend = isWeekend(d);
-        const disabled = holiday || weekend;
+        const raw = values[k] ?? "";
+        const val: DayCode = raw === "" && isWeekend(d) ? "W" : raw;
 
-        const val: DayCode = values[k] ?? "";
+        // Only consider it holiday/weekend visually if the VALUE is H/W
+        const holiday = isHoliday(d) && val === "H";
+        const weekend = isWeekend(d) && val === "W";
+        const disabled = weekend;
+
         const isLeave = val === "L";
 
-        // Holiday: show name on card, no dropdown
-        if (holiday) {
-          const name = holidayName?.(d) ?? "Holiday";
-          return (
-            <Box
-              key={k}
-              sx={{
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 1,
-                p: 0.75,
-                minHeight: 64,
-                bgcolor: "info.light",
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.5,
-              }}
-            >
-              <Typography variant="caption" sx={{ lineHeight: 1.1, opacity: 0.85 }}>
-                {format(d, "dd MMM")}
-              </Typography>
-
-              <Typography variant="caption" fontWeight={900} sx={{ lineHeight: 1.1 }}>
-                {name}
-              </Typography>
-
-              <Typography variant="caption" sx={{ opacity: 0.75, lineHeight: 1.1 }}>
-                (Holiday)
-              </Typography>
-            </Box>
-          );
-        }
-
-        // Non-holiday: dropdown cell
         return (
           <DayCell
             key={k}
@@ -83,6 +49,9 @@ export function WeekRow(props: {
             value={val}
             disabled={disabled}
             isLeave={isLeave}
+            isWeekend={isWeekend(d)}
+            isHoliday={isHoliday(d)}
+            holidayName={isHoliday(d) ? holidayName?.(d) : undefined} // can still show name if you want
             onChange={onChangeDay}
           />
         );
