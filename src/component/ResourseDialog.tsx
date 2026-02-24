@@ -54,11 +54,14 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                             if (date) leaveSet.add(date);
                                         });
 
-                                        const holidaySet = new Set<string>();
+                                        const holidayMap = new Map<string, string>();
+
                                         holidays.forEach((holiday: any) => {
                                             const parts = (holiday.date || "").split("-");
                                             const date = parts[2];
-                                            if (date) holidaySet.add(date);
+                                            if (date) {
+                                                holidayMap.set(date, holiday.name || "Holiday");
+                                            }
                                         });
 
                                         // Generate calendar for provided month/year and align to Monday-first columns
@@ -81,8 +84,8 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                             const hoursNum = typeof hours === 'number' ? hours : Number(hours || 0);
                                             const isHalf = hoursNum === 4;
                                             const isLeave = leaveSet.has(dayStr);
-                                            const isHoliday = holidaySet.has(dayStr);
-                                            const weekday = new Date(y, m - 1, day).toLocaleString("default", { weekday: "short" });
+                                            const holidayName = holidayMap.get(dayStr);
+                                            const isHoliday = Boolean(holidayName);
 
                                             calendarCells.push(
                                                 <Box
@@ -94,7 +97,7 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                                         minHeight: "40px",
                                                         backgroundColor: (theme: any) =>
                                                             isHalf
-                                                                ? '#f0b17e'
+                                                                ? "#f0b17e"
                                                                 : isHoliday
                                                                     ? alpha(theme.palette.info.light, 0.22)
                                                                     : isLeave
@@ -105,18 +108,28 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                                         justifyContent: "space-between",
                                                     }}
                                                 >
-                                                    <Box>
-                                                        <Typography sx={{ fontWeight: 600, fontSize: "12px" }}>{day}</Typography>
-                                                    </Box>
+                                                    <Typography sx={{ fontWeight: 600, fontSize: "12px" }}>
+                                                        {day}
+                                                    </Typography>
+
                                                     {hours && (
-                                                        <Typography sx={{ fontSize: "12px", color: "#555" }}>{hours} hrs</Typography>
+                                                        <Typography sx={{ fontSize: "12px", color: "#555" }}>
+                                                            {hours} hrs
+                                                        </Typography>
                                                     )}
-                                                    <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
+
+                                                    <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mt: 0.5 }}>
                                                         {isLeave && (
-                                                            <Chip label="L" size="small" sx={{ backgroundColor: "warning.light", color: "#000", fontWeight: 600, height: 20 }} />
+                                                            <> <Typography sx={{ fontSize: "12px", color: "warning.main" }}>
+                                                            Leave
+                                                        </Typography>
+                                                            </>
                                                         )}
-                                                        {isHoliday && (
-                                                            <Chip label="H" size="small" sx={{ backgroundColor: "info.light", color: "#fff", fontWeight: 600, height: 20 }} />
+
+                                                        {isHoliday && (<> <Typography sx={{ fontSize: "12px", color: "info.main" }}>
+                                                            {holidayName}
+                                                        </Typography>
+                                                            </>
                                                         )}
                                                     </Box>
                                                 </Box>
