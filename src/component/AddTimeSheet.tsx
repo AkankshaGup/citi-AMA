@@ -238,16 +238,33 @@ export default function AddTimeSheet() {
         // important: depend on monthKey + weeks (weeks changes when month changes)
     }, [employeeId, monthKey, weeks]);
 
-    const validate = () => {
+    const validate = (isSave: boolean) => {
         const nextWeekErrors: Record<string, string> = {};
         const nextComplianceErrors: typeof complianceErrors = {};
 
+        const filledWeeks = weeks.filter((w) => (values[w.key] ?? "").trim() !== "");
+
+        // Save mode: need at least 1 input
+        if (isSave && filledWeeks.length === 0) {
+            // Mark first week (or all) with a meaningful error
+            if (weeks[0]) nextWeekErrors[weeks[0].key] = "This field is required.";
+            setWeekErrors(nextWeekErrors);
+            setComplianceErrors(nextComplianceErrors);
+            return false;
+        }
+
         for (const w of weeks) {
-            const raw = values[w.key] ?? "";
-            if (!raw.trim()) {
+            const raw = (values[w.key] ?? "").trim();
+
+            // Submit mode: all required
+            if (!isSave && !raw) {
                 nextWeekErrors[w.key] = "This field is required.";
                 continue;
             }
+
+            // Save mode: validate only filled fields
+            if (isSave && !raw) continue;
+
             const n = toHours(raw);
             if (!Number.isFinite(n)) {
                 nextWeekErrors[w.key] = "Enter a valid number (e.g., 40 or 40.5).";
@@ -259,15 +276,19 @@ export default function AddTimeSheet() {
             }
         }
 
-        if (complianceValues.ptsSavedTillMonth === null) nextComplianceErrors.ptsSavedTillMonth = "Select Yes/No.";
-        if (complianceValues.cofyUpdated === null) nextComplianceErrors.cofyUpdated = "Select Yes/No.";
-        if (complianceValues.citiTrainingCompleted === null) nextComplianceErrors.citiTrainingCompleted = "Select Yes/No.";
+        // Compliance checks ONLY on submit
+        if (!isSave) {
+            if (complianceValues.ptsSavedTillMonth === null) nextComplianceErrors.ptsSavedTillMonth = "Select Yes/No.";
+            if (complianceValues.cofyUpdated === null) nextComplianceErrors.cofyUpdated = "Select Yes/No.";
+            if (complianceValues.citiTrainingCompleted === null) nextComplianceErrors.citiTrainingCompleted = "Select Yes/No.";
+        }
 
         setWeekErrors(nextWeekErrors);
         setComplianceErrors(nextComplianceErrors);
 
         return Object.keys(nextWeekErrors).length === 0 && Object.keys(nextComplianceErrors).length === 0;
     };
+
 
     const buildSubmitBody = (complianceSubmit: boolean): SubmitBody => ({
         employeeId,
@@ -292,8 +313,8 @@ export default function AddTimeSheet() {
         setSuccessMsg(null);
         setShowErrors(true);
 
-        if (!validate()) {
-            setErrorMsg("Please complete the required fields.");
+        if (!validate(true)) {
+            setErrorMsg("Enter hours for atleast one week to save.");
             return;
         }
 
@@ -313,7 +334,7 @@ export default function AddTimeSheet() {
         setSuccessMsg(null);
         setShowErrors(true);
 
-        if (!validate()) {
+        if (!validate(false)) {
             setErrorMsg("Please complete the required fields.");
             return;
         }
