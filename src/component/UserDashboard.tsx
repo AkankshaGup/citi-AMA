@@ -18,14 +18,14 @@ const UserDashboard = () => {
         onChange={handleTabChange}
         aria-label="User Dashboard Tabs"
       >
-        <Tab label="Leave Forecast" />
         <Tab label="Citi Compliance" />
+        <Tab label="Leave Forecast" />
       </Tabs>
 
       {/* Tabs Content */}
       <Box mt={2}>
-        {activeTab === 0 && <LeaveForecastPage />}
-        {activeTab === 1 && <AddTimeSheet />}
+        {activeTab === 0 && <AddTimeSheet />}
+        {activeTab === 1 && <LeaveForecastPage />}
       </Box>
     </Box>
   );

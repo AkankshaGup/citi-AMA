@@ -21,9 +21,9 @@ const MOCK_GET_BY_MONTH: Record<string, LeaveForecastGetApiResponse> = {
                 employeeId: "e1",
                 sowId: "1",
                 timesheets:
-                    '[{"workDate":"2026-02-08","hoursLogged":8.00},{"workDate":"2026-02-09","hoursLogged":8.00},{"workDate":"2026-02-10","hoursLogged":8.00},{"workDate":"2026-02-11","hoursLogged":4.00}]',
+                    '[{"workDate":"2026-02-08","hoursLogged":8.00},{"workDate":"2026-02-09","hoursLogged":8.00},{"workDate":"2026-02-10","hoursLogged":8.00},{"workDate":"2026-02-11","hoursLogged":4.00},{"workDate":"2026-02-17","hoursLogged":8.00},{"workDate":"2026-02-14","hoursLogged":8.00}]',
                 leaves: '[{"comments":"Sick leave","startDate":"2026-02-09","leaveTypeId":1}]',
-                holidays: '[{"date":"2026-02-22","name":"Holi","type":"1"}]',
+                holidays: '[{"date":"2026-02-17","name":"Holi","type":"1"}]',
             },
         ],
     },
