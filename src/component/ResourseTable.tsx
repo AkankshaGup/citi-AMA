@@ -34,6 +34,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
     const [openModal, setOpenModal] = useState(false);
     const [selectedRow, setSelectedRow] = useState<any>(null);
     const totalWeeks = getWeeksInCurrentMonth();
+
     const fetchTeamResources = async () => {
         setLoading(true);
         setErrorMsg(null);
@@ -47,7 +48,6 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
                 setResourceData(data.content);
                 setTotalCount(typeof data.totalElements === 'number' ? data.totalElements : data.content.length);
             } else if (Array.isArray(data)) {
-                // fallback in case API returns plain array
                 setResourceData(data);
                 setTotalCount(data.length);
             } else {
@@ -56,7 +56,6 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
             }
 
         } catch (err) {
-            // fallback metadata object and surface an error message
             const fallback = (resourceTimesheetData as any);
             setResourceData(Array.isArray(fallback.content) ? fallback.content : []);
             setTotalCount(typeof fallback.totalElements === 'number' ? fallback.totalElements : (Array.isArray(fallback.content) ? fallback.content.length : 0));
@@ -69,6 +68,9 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
         fetchTeamResources();
     }, [sowId, page, rowsPerPage, month]);
 
+    useEffect(() => {
+        setPage(0);
+    }, [sowId]);
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -89,15 +91,24 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
         setSelectedRow(null);
     };
 
-    // Server provides paginated `content`, so render `resourceData` directly.
     const paginatedData = resourceData;
+    const getTotalPtsHours = (row: any): number => {
+        try {
+            const weeklyHours = JSON.parse(row.weeklyHours || "[]");
+            return Array.isArray(weeklyHours)
+                ? weeklyHours.reduce((s: number, w: any) => s + (Number(w?.hours) || 0), 0)
+                : 0;
+        } catch {
+            return 0;
+        }
+    };
     const columns: { key: string; label: string; width?: number; render?: (v: any, i?: number, row?: any) => React.ReactNode }[] = [
         { key: "sno", label: "S.No", width: 3, render: (_v, i) => (i ?? 0) + 1 },
         { key: "location", label: "Location", width: 4 },
         { key: "employeeId", label: "Emp ID", width: 4 },
         { key: "soeId", label: "SOE ID", width: 4 },
         { key: "name", label: "Resource Name", width: 6 },
-        { key: "assignmentStartDate", label: "Start Date", width: 4},
+        { key: "assignmentStartDate", label: "Start Date", width: 4 },
         { key: "numberOfHalfDays", label: "Half Day", width: 4 },
         { key: "numberOfLeaves", label: "Leave", width: 3 },
         { key: "numberOfHolidays", label: "Holiday", width: 4 },
@@ -178,8 +189,11 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
                 </TableHead>
 
                 <TableBody>
-                    {paginatedData.map((row, rowIndex) => (
-                        <TableRow
+                    {paginatedData.map((row, rowIndex) => {
+                        const totalHours = Number(row.totalHours) || 0;
+                        const totalPtsHours = getTotalPtsHours(row);
+                        const hasMismatch = totalHours !== totalPtsHours;
+                        return <TableRow
                             key={row.employeeId || rowIndex}
                             onClick={() => handleRowClick(row)}
                             sx={{ cursor: "pointer", "&:hover": { backgroundColor: "#f5f5f5" } }}
@@ -199,6 +213,22 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
                                         overflowWrap: 'break-word',
                                         wordBreak: 'break-word',
                                         padding: "6px 4px",
+                                        backgroundColor:
+                                            hasMismatch &&
+                                                (col.key === "totalHours" || col.key === "totalPtsHours")
+                                                ? "#fdecea"
+                                                : "transparent",
+                                        color:
+                                            hasMismatch &&
+                                                (col.key === "totalHours" || col.key === "totalPtsHours")
+                                                ? "error.main"
+                                                : "inherit",
+
+                                        fontWeight:
+                                            hasMismatch &&
+                                                (col.key === "totalHours" || col.key === "totalPtsHours")
+                                                ? 700
+                                                : "normal",
                                     }}>
                                         {col.render
                                             ? col.render(value, rowIndex, row)
@@ -207,7 +237,7 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
                                 );
                             })}
                         </TableRow>
-                    ))}
+                    })}
                 </TableBody>
             </Table>
             <TablePagination

@@ -85,7 +85,7 @@ export const mockTeamData = [
   },
   {
     "sowId": "SOW-1007",
-    "sowName": "Merchant Risk & Compliance",
+    "sowName": "MSST-CCB-Informational_Dashboard",
     "managerId": "MANAGER-001"
   },
   {
