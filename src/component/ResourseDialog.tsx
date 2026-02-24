@@ -1,18 +1,20 @@
 import React from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box, Typography, Chip } from "@mui/material";
+import { alpha } from '@mui/material/styles';
+import { TimesheetLegend } from "./timesheet/TimesheetLegend";
 
 interface Props {
     open: boolean;
     onClose: () => void;
     selectedRow: any | null;
     year: string;
-    month: string; 
+    month: string;
 }
 
 export default function ResourseDialog({ open, onClose, selectedRow, year, month }: Props) {
     return (
         <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle sx={{paddingBottom:'8px'}}>
+            <DialogTitle sx={{ paddingBottom: '8px' }}>
                 {selectedRow?.name} - {new Date(Number(year), Number(month) - 1).toLocaleString("default", { month: "long", year: "numeric" })}
             </DialogTitle>
             <DialogContent sx={{ paddingBottom: '8px' }}>
@@ -76,6 +78,8 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                         for (let day = 1; day <= daysInMonth; day++) {
                                             const dayStr = String(day).padStart(2, "0");
                                             const hours = timesheetMap.get(dayStr);
+                                            const hoursNum = typeof hours === 'number' ? hours : Number(hours || 0);
+                                            const isHalf = hoursNum === 4;
                                             const isLeave = leaveSet.has(dayStr);
                                             const isHoliday = holidaySet.has(dayStr);
                                             const weekday = new Date(y, m - 1, day).toLocaleString("default", { weekday: "short" });
@@ -88,7 +92,14 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                                         borderRadius: "4px",
                                                         padding: "8px",
                                                         minHeight: "40px",
-                                                        backgroundColor: isHoliday ? "#ffe0e0" : isLeave ? "#fff3cd" : "#f9f9f9",
+                                                        backgroundColor: (theme: any) =>
+                                                            isHalf
+                                                                ? '#f0b17e'
+                                                                : isHoliday
+                                                                    ? alpha(theme.palette.info.light, 0.22)
+                                                                    : isLeave
+                                                                        ? alpha(theme.palette.warning.light, 0.22)
+                                                                        : theme.palette.background.default,
                                                         display: "flex",
                                                         flexDirection: "column",
                                                         justifyContent: "space-between",
@@ -102,10 +113,10 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                                     )}
                                                     <Box sx={{ display: "flex", gap: 1, mt: 0.5 }}>
                                                         {isLeave && (
-                                                            <Chip label="L" size="small" sx={{ backgroundColor: "#ffc107", color: "#000", fontWeight: 600, height: 20 }} />
+                                                            <Chip label="L" size="small" sx={{ backgroundColor: "warning.light", color: "#000", fontWeight: 600, height: 20 }} />
                                                         )}
                                                         {isHoliday && (
-                                                            <Chip label="H" size="small" sx={{ backgroundColor: "#f44336", color: "#fff", fontWeight: 600, height: 20 }} />
+                                                            <Chip label="H" size="small" sx={{ backgroundColor: "info.light", color: "#fff", fontWeight: 600, height: 20 }} />
                                                         )}
                                                     </Box>
                                                 </Box>
@@ -126,19 +137,8 @@ export default function ResourseDialog({ open, onClose, selectedRow, year, month
                                 })()}
                             </Box>
                         </>
-                        <Box sx={{ mt: 3, display: 'flex', flexDirection: 'row', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                <Chip label="H" sx={{ width: 70, height: 32, fontSize: 13, backgroundColor: '#ffe0e0', color: '#000', fontWeight: 600 }} />
-                                <Typography sx={{ fontWeight: 600, fontSize: "12px" }}>Holiday</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                <Chip label="L" sx={{ width: 70, height: 32, fontSize: 13, backgroundColor: '#fff3cd', color: '#000', fontWeight: 600 }} />
-                                <Typography sx={{ fontWeight: 600, fontSize: "12px" }}>Leave</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                <Chip label="4 hrs" sx={{ width: 70, height: 32, fontSize: 13, backgroundColor: '#f9f9f9', color: '#000', fontWeight: 600, border: '1px solid rgba(0,0,0,0.12)' }} />
-                                <Typography sx={{ fontWeight: 600, fontSize: "12px" }}>Half Day</Typography>
-                            </Box>
+                        <Box marginTop={3}>
+                            <TimesheetLegend />
                         </Box>
                     </Box>
                 ) : null}
