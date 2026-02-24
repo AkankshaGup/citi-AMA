@@ -93,6 +93,7 @@ export default function LeaveForecastPage() {
   const [submitLoading, setSubmitLoading] = React.useState(false);
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [touchedMap, setTouchedMap] = React.useState<Record<string, boolean>>({});
 
   const weeks = React.useMemo(() => getWeeksForMonth(month), [month]);
   const monthTitle = format(month, "MMMM yyyy");
@@ -121,6 +122,7 @@ export default function LeaveForecastPage() {
       setValues({});
       setHolidayMap({});
       setSystemValueMap({});
+      setTouchedMap({});
 
       try {
         // const resp = await fetchLeaveForecastMock(employeeId, key);
@@ -217,7 +219,11 @@ export default function LeaveForecastPage() {
   const setDayValue = (d: Date, code: DayCode) => {
     if (!isSameMonth(d, month)) return;
     if (isDisabledNotWeekend(d)) return;
-    setValues((prev) => ({ ...prev, [dayKey(d)]: code }));
+
+    const k = dayKey(d);
+
+    setValues((prev) => ({ ...prev, [k]: code }));
+    setTouchedMap((prev) => ({ ...prev, [k]: true })); // mark as user-edited
   };
 
   const requiredDates = React.useMemo(() => getRequiredDatesForMonth(month, isDisabledDay), [month, isDisabledDay]);
@@ -235,15 +241,29 @@ export default function LeaveForecastPage() {
   const handleSubmit = async () => {
     if (saveDisabled) return;
 
-    // - ignore H/W if unchanged
-    // - if user changes H/W to hours/leave => send it
+    // Leave: only send if user explicitly set L (or it came from API and is not system)
     const leaveForecast = Object.entries(values)
-      .filter(([date, v]) => v === "L" && systemValueMap[date] !== "L")
+      .filter(([date, v]) => v === "L" && (touchedMap[date] || systemValueMap[date] !== "L"))
       .map(([date]) => ({ date }));
 
     const timesheet = Object.entries(values)
-      .filter(([date, v]) => (v === "8" || v === "4" || v === "12") && systemValueMap[date] !== v)
-      .map(([date, v]) => ({ date, hours: Number(v) }));
+      .filter(([date, v]) => {
+        // if user never touched and it is system H/W -> ignore
+        const isSystem = systemValueMap[date] === "H" || systemValueMap[date] === "W";
+        if (isSystem && !touchedMap[date]) return false;
+
+        // send for hours always when changed (or touched)
+        if (v === "8" || v === "4" || v === "12") return true;
+
+        // if user changed back to H/W, send 0 hours
+        if ((v === "H" || v === "W") && touchedMap[date]) return true;
+
+        return false;
+      })
+      .map(([date, v]) => ({
+        date,
+        hours: v === "8" || v === "4" || v === "12" ? Number(v) : 0, // H/W => 0
+      }));
 
     const payload: SubmitPayload = { employeeId, leaveForecast, timesheet };
 
