@@ -457,7 +457,7 @@ export default function AddTimeSheet() {
                     color: "text.secondary",
                   }}
                 >
-                  {w.label}
+                  PTS {w.label}
                 </Typography>
 
                 <TextField
