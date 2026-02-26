@@ -21,7 +21,7 @@ export default function AppLayout() {
                     flex: 1,
                     overflowY: "auto",
                     px: 3,
-                    py: 2,
+                    py: 1,
                     backgroundColor: "#f5f7fb",
                 }}
             >
