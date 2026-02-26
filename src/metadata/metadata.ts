@@ -2,7 +2,7 @@ export const loginRes = {
     "userId": "e1",
     "name": "Alice Admin",
     "email": "alice.admin@example.com",
-    "role": "ROLE_ADMIN",
+    "role": "ROLE_User",
     "message": "Login successful"
 
 } 
