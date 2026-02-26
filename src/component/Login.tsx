@@ -32,9 +32,9 @@ const Login: React.FC = () => {
 			auth.setUser(res.data);
 			navigate("/");
 		} catch (err: any) {
-			// setError(err?.response?.data?.message || "Login failed");
-			auth.setUser(loginRes); // Need to Remove
-			navigate("/");
+			setError(err?.response?.data?.message || "Login failed");
+			// auth.setUser(loginRes); // Need to Remove
+			// navigate("/");
 		}
 	};
 
@@ -147,7 +147,7 @@ const Login: React.FC = () => {
               variant="outlined"
               autoComplete="current-password"
               sx={{
-                mb: "52px",
+                mb: "14px",
                 "& .MuiOutlinedInput-root": {
                   height: "42px",
                   backgroundColor: "#dfe6ef",
@@ -181,6 +181,7 @@ const Login: React.FC = () => {
               disableElevation
               variant="contained"
               sx={{
+                marginTop: "16px",
                 height: "52px",
                 fontSize: "16px",
                 fontWeight: 400,

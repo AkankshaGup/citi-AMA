@@ -56,9 +56,9 @@ const ResourseTable: React.FC<IResourseTable> = ({ sowId, month }: IResourseTabl
             }
 
         } catch (err) {
-            const fallback = (resourceTimesheetData as any);
-            setResourceData(Array.isArray(fallback.content) ? fallback.content : []);
-            setTotalCount(typeof fallback.totalElements === 'number' ? fallback.totalElements : (Array.isArray(fallback.content) ? fallback.content.length : 0));
+            // const fallback = (resourceTimesheetData as any);
+            // setResourceData(Array.isArray(fallback.content) ? fallback.content : []);
+            // setTotalCount(typeof fallback.totalElements === 'number' ? fallback.totalElements : (Array.isArray(fallback.content) ? fallback.content.length : 0));
             setErrorMsg(err instanceof Error ? err.message : String(err));
         } finally {
             setLoading(false);
