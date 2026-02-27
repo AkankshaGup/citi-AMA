@@ -15,7 +15,7 @@ import { TimesheetGridHeader } from "./timesheet/TimesheetGridHeader";
 import { WeekRow } from "./timesheet/WeekRow";
 import { ActionsBar } from "./timesheet/ActionsBar";
 import { auth } from "../auth/auth";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance";
 import axios from "axios";
 
 /** safe JSON parse for API fields that are JSON strings */

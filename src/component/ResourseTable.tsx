@@ -13,7 +13,7 @@ import {
     Alert,
 } from "@mui/material";
 import { format } from "date-fns";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance.ts";
 import StatusChip from "../generic/StatusChip";
 import { getWeeksInCurrentMonth } from "../utils/dateUtils";
 import { resourceTimesheetData } from "../metadata/metadata";

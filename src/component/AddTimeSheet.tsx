@@ -32,7 +32,7 @@ import {
 import { getWeeksLabelForMonth } from "../utils/dateUtils";
 import type { WeekRow } from "../types/timesheetTypes";
 import { type ComplianceAnswers } from "./modal/ComplianceModal";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance";
 import axios from "axios";
 import { auth } from "../auth/auth";
 import UserDashboardHeader from "./timesheet/UserDashboardHeader";

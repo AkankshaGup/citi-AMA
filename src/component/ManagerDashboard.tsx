@@ -3,7 +3,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import { TimesheetHeader } from "./timesheet/TimesheetHeader.tsx";
 import ResourseTable from "./ResourseTable";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance.ts";
 import React, { useEffect, useState } from "react";
 import { addMonths, subMonths, startOfMonth, format } from "date-fns";
 import { auth } from "../auth/auth";

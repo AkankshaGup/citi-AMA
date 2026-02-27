@@ -7,36 +7,42 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance.ts";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/auth";
 import {loginRes} from "../metadata/metadata.ts";
+import { useLogin } from "../hooks/useLogin.ts";
 
 const Login: React.FC = () => {
 	const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [errorStr, setError] = useState("");
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+const { mutate } = useLogin();
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!email || !password) {
-			setError("Please enter email and password");
-			return;
-		}
-		setError("");
-		try {
-			const res = await api.post("/auth/login", { email, password });
-			auth.setUser(res.data);
-			navigate("/");
-		} catch (err: any) {
-			// setError(err?.response?.data?.message || "Login failed");
-			auth.setUser(loginRes); // Need to Remove
-			navigate("/");
-		}
-	};
+const handleSubmit = (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!email || !password) {
+    setError("Please enter email and password");
+    return;
+  }
+
+  mutate(
+    { email, password },
+    {
+      onSuccess: (data) => {
+        auth.setUser(data);
+        navigate("/");
+      },
+      onError: (err: any) => {
+        setError(err?.response?.data?.message || "Login failed");
+      },
+    }
+  );
+};
 
   return (
     <Box
@@ -169,9 +175,9 @@ const Login: React.FC = () => {
               }}
             />
 
-            {error && (
+            {errorStr && (
               <Typography sx={{ color: "red", fontSize: "14px", mb: 2 }}>
-                {error}
+                {errorStr}
               </Typography>
             )}
             
