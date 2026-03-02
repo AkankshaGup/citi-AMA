@@ -94,3 +94,14 @@ export const mockTeamData = [
     "managerId": "MANAGER-001"
   }
 ]
+
+export const mockMonthlyReviewData = {
+    "employeeId": "AIPL13991",
+    "month": "2026-02-01",
+    "whatWentWell": "Completed all tasks on time",
+    "improvementsNeeded": "Better documentation",
+    "blockersChallenges": "API delays",
+    "thingsToTry": "Automate tests",
+    "clientAppreciation": "Client praised responsiveness",
+    "keyAchievements": "Phase 1 completed successfully"
+}
