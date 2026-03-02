@@ -7,10 +7,8 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
-import { api } from "../config/axiosInstance.ts";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../auth/auth";
-import {loginRes} from "../metadata/metadata.ts";
 import { useLogin } from "../hooks/useLogin.ts";
 
 const Login: React.FC = () => {
