@@ -32,9 +32,10 @@ import {
 import { getWeeksLabelForMonth } from "../utils/dateUtils";
 import type { WeekRow } from "../types/timesheetTypes";
 import { type ComplianceAnswers } from "./modal/ComplianceModal";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance";
 import axios from "axios";
 import { auth } from "../auth/auth";
+import UserDashboardHeader from "./timesheet/UserDashboardHeader";
 
 function YesNoQuestionCompact({
   label,
@@ -395,29 +396,14 @@ export default function AddTimeSheet() {
       </Backdrop>
 
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
-        <Typography variant="h6" fontWeight={700}>
-          Citi Compliance
-        </Typography>
-
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1, gap: 2 }}>
-          {/* Prev disabled in prev month */}
-          <IconButton onClick={handlePrev} disabled={uiDisabled}>
-            <ChevronLeftIcon />
-          </IconButton>
-
-          <Typography fontWeight={700} sx={{ textAlign: "center", fontSize: "18px", minWidth: 160 }}>
-            {format(month, "MMMM yyyy")}
-          </Typography>
-
-          {/* Next should stay enabled (unless loading) */}
-          <IconButton onClick={handleNext} disabled={loading || saving || submitting}>
-            <ChevronRightIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      <Divider sx={{ my: 2 }} />
+      <UserDashboardHeader
+        handlePrev={handlePrev}
+        handleNext={handleNext}
+        month={month}
+        title="Citi Compliance"
+        isNextDisabled={loading || saving || submitting}
+        isPreDisabled={uiDisabled}
+      />
 
       <Box px={{ xs: 2, sm: 8 }}>
         {/* Week inputs (one row) */}

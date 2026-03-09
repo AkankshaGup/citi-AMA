@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ManagerDashboard from "./ManagerDashboard";
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance";
 import { auth } from "../auth/auth";
 
 // Mock dependencies

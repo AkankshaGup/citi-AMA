@@ -3,12 +3,11 @@ import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import { TimesheetHeader } from "./timesheet/TimesheetHeader.tsx";
 import ResourseTable from "./ResourseTable";
-import { api } from "../api/axiosInstance";
+import { api } from "../config/axiosInstance.ts";
 import React, { useEffect, useState } from "react";
 import { addMonths, subMonths, startOfMonth, format } from "date-fns";
 import { auth } from "../auth/auth";
 import { Typography, Button, Alert } from "@mui/material";
-import { mockTeamData } from "../metadata/metadata";
 
 interface TeamResource {
 	sowId: string;
@@ -22,6 +21,13 @@ export default function ManagerDashboard() {
 	const [teamData, setTeamData] = useState<TeamResource[]>([]);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [selectedSow, setSelectedSow] = useState<TeamResource | null>(null);
+
+	const handleDownload = () => {
+		if (!selectedSow) return;
+		const yearStr = format(month, "yyyy");
+		const monthStr = format(month, "MM");
+		window.open(`http://localhost:8700/public/export/employee-reports?sowId=${selectedSow.sowId}&month=${yearStr}-${monthStr}`, "_blank");
+	};
 	const user = auth.getUser();
 
 	const fetchTeam = async () => {
@@ -83,6 +89,7 @@ export default function ManagerDashboard() {
 						background:
 							"linear-gradient(90deg, #0B4DBA 0%, #0A3FA3 100%)",
 					}}
+					onClick={handleDownload} 
 				>
 					Export
 				</Button>

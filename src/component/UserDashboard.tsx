@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Tabs, Tab, Box } from "@mui/material";
 import LeaveForecastPage from "./LeaveForecastPage";
 import AddTimeSheet from "./AddTimeSheet";
+import KeyAchievements from "./KeyAchievementsPage";
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -20,12 +21,14 @@ const UserDashboard = () => {
       >
         <Tab label="Citi Compliance" />
         <Tab label="Leave Forecast" />
+        <Tab label="Key Achievements" />
       </Tabs>
 
       {/* Tabs Content */}
       <Box mt={2}>
         {activeTab === 0 && <AddTimeSheet />}
         {activeTab === 1 && <LeaveForecastPage />}
+        {activeTab === 2 && <KeyAchievements />}
       </Box>
     </Box>
   );
