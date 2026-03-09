@@ -8,7 +8,6 @@ import React, { useEffect, useState } from "react";
 import { addMonths, subMonths, startOfMonth, format } from "date-fns";
 import { auth } from "../auth/auth";
 import { Typography, Button, Alert } from "@mui/material";
-import { useEmployeeReport } from "../hooks/useEmployeeReport.ts";
 
 interface TeamResource {
 	sowId: string;
@@ -22,16 +21,12 @@ export default function ManagerDashboard() {
 	const [teamData, setTeamData] = useState<TeamResource[]>([]);
 	const [errorMsg, setErrorMsg] = useState<string | null>(null);
 	const [selectedSow, setSelectedSow] = useState<TeamResource | null>(null);
-	const { mutate, isPending } = useEmployeeReport();
 
 	const handleDownload = () => {
 		if (!selectedSow) return;
 		const yearStr = format(month, "yyyy");
 		const monthStr = format(month, "MM");
-		mutate({
-			sowId: selectedSow?.sowId,
-			month: `${yearStr}-${monthStr}`,
-		});
+		window.open(`http://localhost:8700/public/export/employee-reports?sowId=${selectedSow.sowId}&month=${yearStr}-${monthStr}`, "_blank");
 	};
 	const user = auth.getUser();
 
@@ -94,9 +89,9 @@ export default function ManagerDashboard() {
 						background:
 							"linear-gradient(90deg, #0B4DBA 0%, #0A3FA3 100%)",
 					}}
-					onClick={handleDownload} disabled={isPending || !selectedSow}
+					onClick={handleDownload} 
 				>
-					{isPending ? "Downloading..." : "Export"}
+					Export
 				</Button>
 			</Box>
 			{errorMsg && (
